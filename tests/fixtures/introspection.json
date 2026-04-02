@@ -1,0 +1,53 @@
+{
+  "data": {
+    "__schema": {
+      "queryType": { "name": "Query" },
+      "mutationType": { "name": "Mutation" },
+      "types": [
+        {
+          "name": "Query",
+          "fields": [
+            {
+              "name": "pets",
+              "description": "List all pets",
+              "args": [
+                {
+                  "name": "limit",
+                  "description": "Max results",
+                  "type": { "kind": "SCALAR", "name": "Int", "ofType": null },
+                  "defaultValue": null
+                }
+              ],
+              "type": { "kind": "LIST", "name": null, "ofType": { "kind": "OBJECT", "name": "Pet" } }
+            }
+          ]
+        },
+        {
+          "name": "Mutation",
+          "fields": [
+            {
+              "name": "createPet",
+              "description": "Create a pet",
+              "args": [
+                {
+                  "name": "name",
+                  "description": "Pet name",
+                  "type": { "kind": "NON_NULL", "name": null, "ofType": { "kind": "SCALAR", "name": "String" } },
+                  "defaultValue": null
+                }
+              ],
+              "type": { "kind": "OBJECT", "name": "Pet" }
+            }
+          ]
+        },
+        {
+          "name": "Pet",
+          "fields": [
+            { "name": "id",   "description": "", "args": [], "type": { "kind": "SCALAR", "name": "String" } },
+            { "name": "name", "description": "", "args": [], "type": { "kind": "SCALAR", "name": "String" } }
+          ]
+        }
+      ]
+    }
+  }
+}
