@@ -12,10 +12,16 @@ pub struct OpenApiBackend {
 
 impl OpenApiBackend {
     pub fn from_file(path: &str) -> Result<Self> {
-        let data = std::fs::read_to_string(path)
+        use crate::deser::{parse_any, FormatHint};
+        let bytes = std::fs::read(path)
             .with_context(|| format!("reading spec file {path}"))?;
-        let spec: serde_json::Value = serde_json::from_str(&data)
-            .context("parsing OpenAPI spec JSON")?;
+        let hint = std::path::Path::new(path)
+            .extension()
+            .and_then(|e| e.to_str())
+            .map(FormatHint::from_extension)
+            .unwrap_or(FormatHint::Unknown);
+        let spec = parse_any(&bytes, hint)
+            .with_context(|| format!("parsing spec file {path}"))?;
         let base_url = extract_base_url(&spec);
         Ok(Self { spec, base_url, auth_headers: vec![] })
     }

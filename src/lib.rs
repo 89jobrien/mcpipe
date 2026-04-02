@@ -1,3 +1,4 @@
+pub mod deser;
 pub mod domain;
 pub mod backend;
 pub mod secret;

@@ -186,6 +186,8 @@ fn build_global_parser() -> Command {
 }
 
 async fn fetch_spec(url: &str, auth_headers: &[(String, String)]) -> Result<serde_json::Value> {
+    use mcpipe::deser::{parse_any, FormatHint};
+
     let client = reqwest::Client::new();
     let mut req = client.get(url);
     for (k, v) in auth_headers {
@@ -195,5 +197,23 @@ async fn fetch_spec(url: &str, auth_headers: &[(String, String)]) -> Result<serd
     if !resp.status().is_success() {
         bail!("HTTP {}: {}", resp.status(), resp.text().await.unwrap_or_default());
     }
-    resp.json().await.context("parsing spec JSON")
+
+    // Derive format hint: Content-Type header first, then URL file extension
+    let ct_hint = resp.headers()
+        .get(reqwest::header::CONTENT_TYPE)
+        .and_then(|v| v.to_str().ok())
+        .map(FormatHint::from_content_type)
+        .unwrap_or(FormatHint::Unknown);
+
+    let url_hint = std::path::Path::new(url)
+        .extension()
+        .and_then(|e| e.to_str())
+        .map(FormatHint::from_extension)
+        .unwrap_or(FormatHint::Unknown);
+
+    // Content-Type wins if it's definitive, otherwise fall back to URL extension
+    let hint = if ct_hint != FormatHint::Unknown { ct_hint } else { url_hint };
+
+    let bytes = resp.bytes().await.context("reading spec body")?;
+    parse_any(&bytes, hint).context("parsing spec")
 }
