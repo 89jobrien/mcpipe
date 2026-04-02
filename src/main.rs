@@ -37,7 +37,13 @@ async fn run() -> Result<()> {
         .unwrap_or_default()
         .filter_map(|h| {
             let (k, v) = h.split_once(':')?;
-            Some((k.trim().to_string(), resolve_secret(v.trim()).ok()?))
+            match resolve_secret(v.trim()) {
+                Ok(resolved) => Some((k.trim().to_string(), resolved)),
+                Err(e) => {
+                    eprintln!("Warning: skipping auth header {k:?}: {e}");
+                    None
+                }
+            }
         })
         .collect();
 

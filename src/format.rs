@@ -51,7 +51,9 @@ fn run_jq(json: &str, expr: &str) -> Result<String> {
         .map_err(|e| anyhow::anyhow!("jq not found: {e}"))?;
 
     use std::io::Write;
-    child.stdin.as_mut().unwrap().write_all(json.as_bytes())?;
+    child.stdin.as_mut()
+        .ok_or_else(|| anyhow::anyhow!("jq stdin not available"))?
+        .write_all(json.as_bytes())?;
     let out = child.wait_with_output()?;
     if !out.status.success() {
         bail!("jq error: {}", String::from_utf8_lossy(&out.stderr));

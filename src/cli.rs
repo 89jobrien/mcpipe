@@ -4,7 +4,7 @@ use crate::domain::{ArgMap, CommandDef, ParamDef};
 /// Build a clap Command tree from a list of CommandDefs.
 /// The returned Command has one subcommand per CommandDef.
 pub fn build_command(app_name: &str, cmds: &[CommandDef]) -> Command {
-    // Box::leak to convert owned strings to 'static references that clap can use
+    // clap 4.6 requires 'static for Command/Arg IDs; leak to satisfy the bound
     let app_name_static: &'static str = Box::leak(app_name.to_string().into_boxed_str());
     let mut app = Command::new(app_name_static)
         .subcommand_required(false)
@@ -30,7 +30,7 @@ fn build_arg(param: &ParamDef) -> Arg {
     let schema_type = param.schema.get("type").and_then(|v| v.as_str()).unwrap_or("string");
     let is_bool = schema_type == "boolean";
 
-    // Box::leak to convert owned strings to 'static references that clap can use
+    // clap 4.6 requires 'static for Arg IDs; leak to satisfy the bound
     let name_static: &'static str = Box::leak(param.name.clone().into_boxed_str());
     let mut arg = Arg::new(name_static)
         .long(name_static)
@@ -39,7 +39,8 @@ fn build_arg(param: &ParamDef) -> Arg {
     if is_bool {
         arg = arg.action(clap::ArgAction::SetTrue);
     } else {
-        let value_name_static: &'static str = Box::leak(param.name.to_uppercase().replace('-', "_").into_boxed_str());
+        let value_name_static: &'static str =
+            Box::leak(param.name.to_uppercase().replace('-', "_").into_boxed_str());
         arg = arg.value_name(value_name_static);
         if param.required {
             arg = arg.required(true);

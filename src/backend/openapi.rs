@@ -200,7 +200,10 @@ fn find_operation(spec: &serde_json::Value, operation_id: &str) -> Option<(Strin
         let pi = path_item.as_object()?;
         for method in &["get", "post", "put", "patch", "delete"] {
             if let Some(op) = pi.get(*method) {
-                let oid = op.get("operationId").and_then(|v| v.as_str()).unwrap_or("");
+                let fallback = format!("{}-{}", method, path.trim_matches('/'));
+                let oid = op.get("operationId")
+                    .and_then(|v| v.as_str())
+                    .unwrap_or(&fallback);
                 if oid == operation_id {
                     return Some((path.clone(), method.to_string()));
                 }

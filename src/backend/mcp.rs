@@ -87,7 +87,7 @@ impl StdioSession {
             "method": method,
             "params": params,
         });
-        let line = format!("{}\n", serde_json::to_string(&msg).unwrap());
+        let line = format!("{}\n", serde_json::to_string(&msg).expect("BUG: json literal failed to serialize"));
 
         self.stdin.lock().await
             .write_all(line.as_bytes()).await
@@ -120,7 +120,7 @@ impl StdioSession {
             "method": method,
             "params": params,
         });
-        let line = format!("{}\n", serde_json::to_string(&msg).unwrap());
+        let line = format!("{}\n", serde_json::to_string(&msg).expect("BUG: json literal failed to serialize"));
         self.stdin.lock().await
             .write_all(line.as_bytes()).await
             .map_err(|e| BackendError::Transport(format!("write notification: {e}")))?;
