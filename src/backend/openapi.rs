@@ -224,10 +224,10 @@ pub fn resolve_refs(spec: &serde_json::Value) -> serde_json::Value {
 fn resolve_node(node: &serde_json::Value, root: &serde_json::Value) -> serde_json::Value {
     match node {
         serde_json::Value::Object(map) => {
-            if let Some(ref_val) = map.get("$ref").and_then(|v| v.as_str()) {
-                if let Some(resolved) = resolve_ref(ref_val, root) {
-                    return resolve_node(&resolved, root);
-                }
+            if let Some(ref_val) = map.get("$ref").and_then(|v| v.as_str())
+                && let Some(resolved) = resolve_ref(ref_val, root)
+            {
+                return resolve_node(&resolved, root);
             }
             serde_json::Value::Object(
                 map.iter()

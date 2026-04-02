@@ -59,7 +59,7 @@ impl GraphQlBackend {
         for type_def in types {
             let type_name = type_def.get("name").and_then(|v| v.as_str()).unwrap_or("");
             let is_query = type_name == query_type;
-            let is_mutation = mutation_type.map_or(false, |mt| type_name == mt);
+            let is_mutation = mutation_type.is_some_and(|mt| type_name == mt);
 
             if !is_query && !is_mutation {
                 continue;

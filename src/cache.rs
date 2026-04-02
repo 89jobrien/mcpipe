@@ -16,14 +16,13 @@ impl Cache {
     }
 
     pub fn default_dir() -> PathBuf {
-        let base = std::env::var("MCPIPE_CACHE_DIR")
+        std::env::var("MCPIPE_CACHE_DIR")
             .map(PathBuf::from)
             .unwrap_or_else(|_| {
                 dirs::cache_dir()
                     .unwrap_or_else(|| PathBuf::from("/tmp"))
                     .join("mcpipe")
-            });
-        base
+            })
     }
 
     fn key(source: &str) -> String {

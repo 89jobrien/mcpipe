@@ -1,5 +1,5 @@
 use clap::{Arg, ArgMatches, Command};
-use crate::domain::{ArgMap, CommandDef, ParamDef, ParamLocation};
+use crate::domain::{ArgMap, CommandDef, ParamDef};
 
 /// Build a clap Command tree from a list of CommandDefs.
 /// The returned Command has one subcommand per CommandDef.
