@@ -9,6 +9,10 @@ license = "MIT OR Apache-2.0"
 name = "mcpipe"
 path = "src/main.rs"
 
+[lib]
+name = "mcpipe"
+path = "src/lib.rs"
+
 [features]
 integration = []
 
