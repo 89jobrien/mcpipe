@@ -12,6 +12,8 @@
 - Secret resolution: `env:VAR`, `file:/path`, literal passthrough
 - Multi-format deserialization (`src/deser.rs`): Content-Type + URL extension hint, fallback chain
 - 28 tests passing; GitHub repo at `https://github.com/89jobrien/mcpipe`
+- `McpBackend`: HTTP/SSE transport (`HttpSession`) — connects to SSE endpoint, waits for `endpoint` event, POSTs JSON-RPC 2.0, routes responses via background stream task + oneshot channels
+- Verified against Pieces MCP (`http://localhost:39300/model_context_protocol/2024-11-05/sse`): ~35 tools discovered, execute round-trip confirmed
 
 ---
 
@@ -27,17 +29,9 @@
 
 ---
 
-### 2. MCP HTTP/SSE transport
+### ~~2. MCP HTTP/SSE transport~~ ✅ DONE (2026-04-03)
 
-**Problem:** `McpBackend::from_http()` returns `Err(BackendError::Transport("MCP HTTP transport not yet implemented"))`.
-
-**Fix:** Implement two sub-modes:
-- **HTTP**: POST JSON-RPC to `{url}/rpc` (or configurable path), use `reqwest`.
-- **SSE**: Connect to `{url}/sse`, parse `eventsource-client` stream for JSON-RPC responses. `eventsource-client` is already in `Cargo.toml`.
-
-MCP HTTP is JSON-RPC 2.0 — same message structure as stdio, different transport layer. `send_request` / `send_notification` / `send_initialize` logic can be shared with stdio.
-
-**Files:** `src/backend/mcp.rs` — add `HttpSession` struct alongside `StdioSession`.
+`HttpSession` implemented in `src/backend/mcp.rs`. Connects to SSE endpoint, waits for `endpoint` event, POSTs JSON-RPC 2.0 via `reqwest`, routes responses from background SSE stream via oneshot channels. Verified against Pieces MCP.
 
 ---
 
