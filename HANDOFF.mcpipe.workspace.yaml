@@ -3,69 +3,133 @@ id: mcpipe
 updated: 2026-04-03
 branch: main
 state:
-  tests: "28 passing (31 with --features integration)"
+  tests: 28 passing (31 with --features integration)
   build: clean
-  notes: All handoff items from previous session completed
-
+  notes: All P1 items done. Remaining sentinel suggestions are P3 code quality (no blockers).
 items:
-  - id: mcpipe-6
-    name: auth-headers-field-rename
-    priority: P1
-    status: done
-    completed: 2026-04-03
-    title: "Rename McpTransport::Http `auth_headers` field to `headers`"
-
-  - id: mcpipe-7
-    name: stream-task-abort-handle
-    priority: P1
-    status: done
-    completed: 2026-04-03
-    title: "Add abort handle for detached SSE stream JoinHandle"
-
-  - id: mcpipe-1
-    name: openapi-relative-server-url
-    priority: P1
-    status: done
-    completed: 2026-04-03
-    title: Relative `servers[0].url` in OpenAPI specs breaks HTTP requests
-
-  - id: mcpipe-2
-    name: arbitrary-request-headers
-    priority: P1
-    status: done
-    completed: 2026-04-03
-    title: Add `--header KEY:VALUE` flag for arbitrary HTTP headers
-
-  - id: mcpipe-3
-    name: graphql-fields-override
-    priority: P2
-    status: done
-    completed: 2026-04-03
-    title: Wire `--fields` override for GraphQL selection sets
-
-  - id: mcpipe-4
-    name: integration-test-feature-gate
-    priority: P2
-    status: done
-    completed: 2026-04-03
-    title: Integration tests behind `--features integration` flag
-
-  - id: mcpipe-5
-    name: list-search-output-polish
-    priority: P2
-    status: done
-    completed: 2026-04-03
-    title: Polish `--list`/`--search` output with aligned columns
-
+- id: mcpipe-6
+  doob_uuid: b0cb93d5-1d52-4efa-9daa-7f289752b6d7
+  name: auth-headers-field-rename
+  priority: P1
+  status: done
+  title: Rename McpTransport::Http `auth_headers` field to `headers`
+  files: []
+  extra: []
+  completed: 2026-04-03
+- id: mcpipe-7
+  doob_uuid: 9304ea17-55a9-48d5-a46a-35d7aad6acd3
+  name: stream-task-abort-handle
+  priority: P1
+  status: done
+  title: Add abort handle for detached SSE stream JoinHandle
+  files: []
+  extra: []
+  completed: 2026-04-03
+- id: mcpipe-1
+  doob_uuid: 6a84b3e5-7b0c-4844-9470-e3ad7c7a9fd7
+  name: openapi-relative-server-url
+  priority: P1
+  status: done
+  title: Relative `servers[0].url` in OpenAPI specs breaks HTTP requests
+  files: []
+  extra: []
+  completed: 2026-04-03
+- id: mcpipe-2
+  doob_uuid: 852b6f11-4495-4c39-a6dd-c5db1470d041
+  name: arbitrary-request-headers
+  priority: P1
+  status: done
+  title: Add `--header KEY:VALUE` flag for arbitrary HTTP headers
+  files: []
+  extra: []
+  completed: 2026-04-03
+- id: mcpipe-3
+  doob_uuid: 48ecc79e-dc5d-410e-a1e5-0e3e4b7801f7
+  name: graphql-fields-override
+  priority: P2
+  status: done
+  title: Wire `--fields` override for GraphQL selection sets
+  files: []
+  extra: []
+  completed: 2026-04-03
+- id: mcpipe-4
+  doob_uuid: 16625076-55c3-48b5-a9c9-b0866be3907c
+  name: integration-test-feature-gate
+  priority: P2
+  status: done
+  title: Integration tests behind `--features integration` flag
+  files: []
+  extra: []
+  completed: 2026-04-03
+- id: mcpipe-5
+  doob_uuid: 8805a692-dab2-42a4-9022-ed3ee11821df
+  name: list-search-output-polish
+  priority: P2
+  status: done
+  title: Polish `--list`/`--search` output with aligned columns
+  files: []
+  extra: []
+  completed: 2026-04-03
+- id: mcpipe-8
+  doob_uuid: 1b3ea8cc-9af1-499e-9800-cc0080ce0e0b
+  name: argv-strip-round-trip-test
+  priority: P3
+  status: open
+  title: Add round-trip test for global-flag argv stripping
+  description: |
+    Manual argv stripping in main.rs must be kept in sync with build_global_parser by hand. A mismatch silently passes unknown flags into the dynamic subcommand parser. Consider deriving the strip list from the parser or adding a round-trip test.
+  files:
+  - src/main.rs
+  extra: []
+- id: mcpipe-9
+  doob_uuid: 6f67b66d-7dfd-41dc-b888-b6db8d61e1ef
+  name: reqwest-client-per-call
+  priority: P3
+  status: open
+  title: Build reqwest::Client once in OpenApiBackend, not per execute call
+  description: |
+    reqwest::Client::new() on every execute call allocates a new connection pool. Build the client once in from_file/from_json and store it on the struct.
+  files:
+  - src/backend/openapi.rs
+  extra: []
+- id: mcpipe-10
+  doob_uuid: 0fc1055a-206d-4e06-970c-46d22e5c5ca2
+  name: header-param-injection
+  priority: P3
+  status: open
+  title: Inject ParamLocation::Header params into outgoing OpenAPI requests
+  description: |
+    ParamLocation::Header params are parsed from the spec but never injected into outgoing requests. Add a TODO comment so it's not mistaken for intentional behavior.
+  files:
+  - src/backend/openapi.rs
+  extra: []
+- id: mcpipe-11
+  doob_uuid: b89e5dc9-ac8a-4bb5-8a54-48d93fe4d7c2
+  name: stdio-child-stderr-forwarding
+  priority: P3
+  status: open
+  title: Forward stdio MCP child stderr instead of discarding via Stdio::null()
+  description: |
+    Child stderr is discarded via Stdio::null(). Stdio server diagnostics are invisible on crash. Consider forwarding to eprintln! via a background reader.
+  files:
+  - src/backend/mcp.rs
+  extra: []
 log:
-  - date: 2026-04-03
-    summary: "mcpipe-6 + mcpipe-7 done: renamed auth_headers → headers throughout McpTransport::Http; replaced _stream_task JoinHandle with AbortHandle (aborted on drop). 28 tests passing."
-    commits: [3ae52cc]
-  - date: 2026-04-03
-    summary: "Sentinel review: 2 blocking issues found (auth_headers field rename, detached JoinHandle). 5 suggestions logged."
-  - date: 2026-04-03
-    summary: Completed all 5 open items — relative URL fix, --header flag, --fields per-subcommand, integration test gate, --list output polish
-    commits: [fb4ff92, aca09b0, 64be13b]
-  - date: 2026-04-03
-    summary: Implemented HTTP/SSE transport (HttpSession); verified against Pieces MCP; created HANDOFF.mcpipe.workspace.yaml
-    commits: [d2cebb8, 8ce346c, 996b68a]
+- date: 2026-04-03
+  summary: 'mcpipe-6 + mcpipe-7 done: renamed auth_headers → headers throughout McpTransport::Http; replaced _stream_task JoinHandle with AbortHandle (aborted on drop). 28 tests passing.'
+  commits:
+  - 3ae52cc
+- date: 2026-04-03
+  summary: 'Sentinel review: 2 blocking issues found (auth_headers field rename, detached JoinHandle). 5 suggestions logged.'
+- date: 2026-04-03
+  summary: Completed all 5 open items — relative URL fix, --header flag, --fields per-subcommand, integration test gate, --list output polish
+  commits:
+  - fb4ff92
+  - aca09b0
+  - 64be13b
+- date: 2026-04-03
+  summary: Implemented HTTP/SSE transport (HttpSession); verified against Pieces MCP; created HANDOFF.mcpipe.workspace.yaml
+  commits:
+  - d2cebb8
+  - 8ce346c
+  - 996b68a
