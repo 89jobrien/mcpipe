@@ -8,6 +8,20 @@ state:
   notes: All handoff items from previous session completed
 
 items:
+  - id: mcpipe-6
+    name: auth-headers-field-rename
+    priority: P1
+    status: done
+    completed: 2026-04-03
+    title: "Rename McpTransport::Http `auth_headers` field to `headers`"
+
+  - id: mcpipe-7
+    name: stream-task-abort-handle
+    priority: P1
+    status: done
+    completed: 2026-04-03
+    title: "Add abort handle for detached SSE stream JoinHandle"
+
   - id: mcpipe-1
     name: openapi-relative-server-url
     priority: P1
@@ -44,6 +58,11 @@ items:
     title: Polish `--list`/`--search` output with aligned columns
 
 log:
+  - date: 2026-04-03
+    summary: "mcpipe-6 + mcpipe-7 done: renamed auth_headers → headers throughout McpTransport::Http; replaced _stream_task JoinHandle with AbortHandle (aborted on drop). 28 tests passing."
+    commits: [3ae52cc]
+  - date: 2026-04-03
+    summary: "Sentinel review: 2 blocking issues found (auth_headers field rename, detached JoinHandle). 5 suggestions logged."
   - date: 2026-04-03
     summary: Completed all 5 open items — relative URL fix, --header flag, --fields per-subcommand, integration test gate, --list output polish
     commits: [fb4ff92, aca09b0, 64be13b]
