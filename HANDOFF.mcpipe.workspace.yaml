@@ -3,78 +3,50 @@ id: mcpipe
 updated: 2026-04-03
 branch: main
 state:
-  tests: "28 passing"
+  tests: "28 passing (31 with --features integration)"
   build: clean
-  notes: HTTP/SSE transport verified against Pieces MCP (~35 tools, execute round-trip confirmed)
+  notes: All handoff items from previous session completed
 
 items:
   - id: mcpipe-1
     name: openapi-relative-server-url
     priority: P1
-    status: open
+    status: done
+    completed: 2026-04-03
     title: Relative `servers[0].url` in OpenAPI specs breaks HTTP requests
-    description: >
-      Specs like petstore use `/api/v3` as servers[0].url. mcpipe uses it literally,
-      failing the HTTP client. Fix: add `--base-url <URL>` global flag; in
-      OpenApiBackend::execute() prefer user-supplied URL. Also auto-resolve relative
-      server URL against the spec's fetch URL (strip path, append relative URL).
-    files:
-      - src/backend/openapi.rs
-      - src/main.rs
 
   - id: mcpipe-2
     name: arbitrary-request-headers
     priority: P1
-    status: open
+    status: done
+    completed: 2026-04-03
     title: Add `--header KEY:VALUE` flag for arbitrary HTTP headers
-    description: >
-      No way to pass arbitrary headers. GitHub API requires `User-Agent: <app>`.
-      Add repeatable `--header KEY:VALUE` to global parser, thread into OpenApiBackend
-      and GraphQlBackend constructors alongside existing auth headers.
-    files:
-      - src/main.rs
-      - src/backend/openapi.rs
-      - src/backend/graphql.rs
 
   - id: mcpipe-3
     name: graphql-fields-override
     priority: P2
-    status: open
+    status: done
+    completed: 2026-04-03
     title: Wire `--fields` override for GraphQL selection sets
-    description: >
-      GraphQlBackend has with_fields_override() but the CLI doesn't expose it per-subcommand.
-      Add `--fields <FIELDS>` as a per-subcommand arg; in execute() check args for
-      a "__fields" key and use it as the selection set string if present.
-    files:
-      - src/cli.rs
-      - src/backend/graphql.rs
 
   - id: mcpipe-4
     name: integration-test-feature-gate
     priority: P2
-    status: open
+    status: done
+    completed: 2026-04-03
     title: Integration tests behind `--features integration` flag
-    description: >
-      Add [features] integration = [] to Cargo.toml. Gate test files with
-      #![cfg(feature = "integration")]. Write at least one test hitting a real
-      MCP server (echo fixture via stdio, or real HTTP endpoint).
-    files:
-      - Cargo.toml
-      - tests/mcp_adapter.rs
 
   - id: mcpipe-5
     name: list-search-output-polish
     priority: P2
-    status: open
+    status: done
+    completed: 2026-04-03
     title: Polish `--list`/`--search` output with aligned columns
-    description: >
-      Currently prints bare command names one per line. Fix: print `name  —  description`
-      aligned in two columns (max name length for padding). --search already filters
-      by substring — add case-insensitive match. Optional: show param count summary.
-    files:
-      - src/main.rs
 
 log:
+  - date: 2026-04-03
+    summary: Completed all 5 open items — relative URL fix, --header flag, --fields per-subcommand, integration test gate, --list output polish
+    commits: [fb4ff92, aca09b0, 64be13b]
   - date: 2026-04-03
     summary: Implemented HTTP/SSE transport (HttpSession); verified against Pieces MCP; created HANDOFF.mcpipe.workspace.yaml
     commits: [d2cebb8, 8ce346c, 996b68a]
