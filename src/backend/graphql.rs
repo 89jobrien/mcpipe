@@ -117,7 +117,11 @@ impl Backend for GraphQlBackend {
     }
 
     async fn execute(&self, cmd: &CommandDef, args: ArgMap) -> Result<serde_json::Value, BackendError> {
+        // Extract per-subcommand fields override (not a real GraphQL arg)
+        let per_call_fields = args.get("__fields").and_then(|v| v.as_str()).map(|s| s.to_string());
+
         let arg_str: String = args.iter()
+            .filter(|(k, _)| k.as_str() != "__fields")
             .map(|(k, v)| format!("{}: {}", k, v))
             .collect::<Vec<_>>()
             .join(", ");
@@ -128,7 +132,9 @@ impl Backend for GraphQlBackend {
             format!("{}({})", cmd.source_name, arg_str)
         };
 
-        let fields = self.fields_override.clone().unwrap_or_else(|| "id".to_string());
+        let fields = per_call_fields
+            .or_else(|| self.fields_override.clone())
+            .unwrap_or_else(|| "id".to_string());
         let query = format!("{{ {} {{ {} }} }}", call, fields);
 
         let client = reqwest::Client::new();
