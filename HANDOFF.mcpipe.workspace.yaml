@@ -8,7 +8,7 @@ state:
   notes: All P1 items done. Remaining sentinel suggestions are P3 code quality (no blockers).
 items:
 - id: mcpipe-6
-  doob_uuid: b0cb93d5-1d52-4efa-9daa-7f289752b6d7
+  doob_uuid: 50bfb5cf-adbe-4354-84a2-999ee899ff4b
   name: auth-headers-field-rename
   priority: P1
   status: done
@@ -17,7 +17,7 @@ items:
   extra: []
   completed: 2026-04-03
 - id: mcpipe-7
-  doob_uuid: 9304ea17-55a9-48d5-a46a-35d7aad6acd3
+  doob_uuid: 4c651e66-5732-4480-a368-86fe95e7b1e5
   name: stream-task-abort-handle
   priority: P1
   status: done
@@ -26,7 +26,7 @@ items:
   extra: []
   completed: 2026-04-03
 - id: mcpipe-1
-  doob_uuid: 6a84b3e5-7b0c-4844-9470-e3ad7c7a9fd7
+  doob_uuid: 5ca4ada7-cee7-42a6-93d8-929d7991b4b7
   name: openapi-relative-server-url
   priority: P1
   status: done
@@ -35,7 +35,7 @@ items:
   extra: []
   completed: 2026-04-03
 - id: mcpipe-2
-  doob_uuid: 852b6f11-4495-4c39-a6dd-c5db1470d041
+  doob_uuid: aa35815f-d9ac-4613-8be9-6f9400ca088d
   name: arbitrary-request-headers
   priority: P1
   status: done
@@ -44,7 +44,7 @@ items:
   extra: []
   completed: 2026-04-03
 - id: mcpipe-3
-  doob_uuid: 48ecc79e-dc5d-410e-a1e5-0e3e4b7801f7
+  doob_uuid: 81c30a98-9d5b-4fc3-933f-8b11fbbfaa25
   name: graphql-fields-override
   priority: P2
   status: done
@@ -53,7 +53,7 @@ items:
   extra: []
   completed: 2026-04-03
 - id: mcpipe-4
-  doob_uuid: 16625076-55c3-48b5-a9c9-b0866be3907c
+  doob_uuid: 8140bddc-05d4-479d-933f-ab1012559a32
   name: integration-test-feature-gate
   priority: P2
   status: done
@@ -62,7 +62,7 @@ items:
   extra: []
   completed: 2026-04-03
 - id: mcpipe-5
-  doob_uuid: 8805a692-dab2-42a4-9022-ed3ee11821df
+  doob_uuid: 4dfa724a-159c-4dbf-9175-01e4685a77da
   name: list-search-output-polish
   priority: P2
   status: done
@@ -71,49 +71,61 @@ items:
   extra: []
   completed: 2026-04-03
 - id: mcpipe-8
-  doob_uuid: 1b3ea8cc-9af1-499e-9800-cc0080ce0e0b
+  doob_uuid: 6c3a0444-da01-48b0-a5aa-bc3b71213530
   name: argv-strip-round-trip-test
   priority: P3
-  status: open
+  status: parked
   title: Add round-trip test for global-flag argv stripping
   description: |
     Manual argv stripping in main.rs must be kept in sync with build_global_parser by hand. A mismatch silently passes unknown flags into the dynamic subcommand parser. Consider deriving the strip list from the parser or adding a round-trip test.
   files:
   - src/main.rs
-  extra: []
+  extra:
+  - date: 2026-04-03
+    type: note
+    note: Superseded by conductor task xzo88d4ls8hu6h1lo3ft (same finding, better description).
 - id: mcpipe-9
-  doob_uuid: 6f67b66d-7dfd-41dc-b888-b6db8d61e1ef
+  doob_uuid: 83c3e132-e17a-416e-87f5-0c9348b1de53
   name: reqwest-client-per-call
   priority: P3
-  status: open
+  status: parked
   title: Build reqwest::Client once in OpenApiBackend, not per execute call
   description: |
     reqwest::Client::new() on every execute call allocates a new connection pool. Build the client once in from_file/from_json and store it on the struct.
   files:
   - src/backend/openapi.rs
-  extra: []
+  extra:
+  - date: 2026-04-03
+    type: note
+    note: Superseded by conductor task 15poox8e4xlmpxdqu2ot.
 - id: mcpipe-10
-  doob_uuid: 0fc1055a-206d-4e06-970c-46d22e5c5ca2
+  doob_uuid: b1cef003-0d4e-45cc-836c-fec644cc130a
   name: header-param-injection
   priority: P3
-  status: open
+  status: parked
   title: Inject ParamLocation::Header params into outgoing OpenAPI requests
   description: |
     ParamLocation::Header params are parsed from the spec but never injected into outgoing requests. Add a TODO comment so it's not mistaken for intentional behavior.
   files:
   - src/backend/openapi.rs
-  extra: []
+  extra:
+  - date: 2026-04-03
+    type: note
+    note: Superseded by conductor task 1ezidbsqfljp81cki67k.
 - id: mcpipe-11
-  doob_uuid: b89e5dc9-ac8a-4bb5-8a54-48d93fe4d7c2
+  doob_uuid: f36e910f-b83b-4d5a-87d2-1141768f3e25
   name: stdio-child-stderr-forwarding
   priority: P3
-  status: open
+  status: parked
   title: Forward stdio MCP child stderr instead of discarding via Stdio::null()
   description: |
     Child stderr is discarded via Stdio::null(). Stdio server diagnostics are invisible on crash. Consider forwarding to eprintln! via a background reader.
   files:
   - src/backend/mcp.rs
-  extra: []
+  extra:
+  - date: 2026-04-03
+    type: note
+    note: Superseded by conductor task 2tgau6uz7crk3laphvol.
 log:
 - date: 2026-04-03
   summary: 'mcpipe-6 + mcpipe-7 done: renamed auth_headers → headers throughout McpTransport::Http; replaced _stream_task JoinHandle with AbortHandle (aborted on drop). 28 tests passing.'
