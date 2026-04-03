@@ -47,27 +47,59 @@ async fn run() -> Result<()> {
         })
         .collect();
 
+    let extra_headers: Vec<(String, String)> = matches
+        .get_many::<String>("header")
+        .unwrap_or_default()
+        .filter_map(|h| {
+            let (k, v) = h.split_once(':')?;
+            Some((k.trim().to_string(), v.trim().to_string()))
+        })
+        .collect();
+
+    // Merge auth + extra headers
+    let all_headers: Vec<(String, String)> = auth_headers.iter().cloned().chain(extra_headers).collect();
+
     // Build backend
     let backend: Box<dyn Backend> = if let Some(cmd) = matches.get_one::<String>("mcp-stdio") {
         Box::new(McpBackend::from_stdio(cmd.clone()))
     } else if let Some(url) = matches.get_one::<String>("mcp") {
-        Box::new(McpBackend::from_http(url.clone(), auth_headers.clone()))
+        Box::new(McpBackend::from_http(url.clone(), all_headers.clone()))
     } else if let Some(url) = matches.get_one::<String>("graphql") {
-        let mut b = GraphQlBackend::new(url.clone(), auth_headers.clone());
+        let mut b = GraphQlBackend::new(url.clone(), all_headers.clone());
         if let Some(fields) = matches.get_one::<String>("fields") {
             b = b.with_fields_override(fields.clone());
         }
         Box::new(b)
     } else if let Some(spec) = matches.get_one::<String>("spec") {
+        let user_base_url = matches.get_one::<String>("base-url").cloned();
         if spec.starts_with("http://") || spec.starts_with("https://") {
-            let spec_json = fetch_spec(spec, &auth_headers).await?;
-            let base_url = spec_json.pointer("/servers/0/url")
-                .and_then(|v| v.as_str())
-                .unwrap_or("http://localhost")
-                .to_string();
-            Box::new(OpenApiBackend::from_json(spec_json, base_url, auth_headers.clone()))
+            let spec_json = fetch_spec(spec, &all_headers).await?;
+            let base_url = user_base_url.unwrap_or_else(|| {
+                let raw = spec_json.pointer("/servers/0/url")
+                    .and_then(|v| v.as_str())
+                    .unwrap_or("http://localhost");
+                // Auto-resolve relative URLs against the spec's fetch URL
+                if raw.starts_with("http://") || raw.starts_with("https://") {
+                    raw.to_string()
+                } else {
+                    // Strip path from spec URL and append relative server URL
+                    if let Ok(parsed) = url::Url::parse(spec) {
+                        let origin = format!("{}://{}", parsed.scheme(), parsed.host_str().unwrap_or("localhost"));
+                        let port_str = parsed.port().map(|p| format!(":{p}")).unwrap_or_default();
+                        format!("{}{}{}", origin, port_str, raw)
+                    } else {
+                        raw.to_string()
+                    }
+                }
+            });
+            Box::new(OpenApiBackend::from_json(spec_json, base_url, all_headers.clone()))
         } else {
-            Box::new(OpenApiBackend::from_file(spec).context("loading OpenAPI spec")?)
+            let mut b = OpenApiBackend::from_file(spec).context("loading OpenAPI spec")?;
+            if let Some(bu) = user_base_url {
+                b = b.with_base_url(bu);
+            }
+            b = b.with_auth_headers(all_headers.clone());
+            Box::new(b)
         }
     } else {
         bail!("specify one of --mcp-stdio, --mcp, --spec, or --graphql");
@@ -103,13 +135,18 @@ async fn run() -> Result<()> {
     // --list / --search
     if list_only || search.is_some() {
         let pattern = search.as_deref().unwrap_or("").to_lowercase();
-        for cmd in &cmds {
-            if pattern.is_empty()
-                || cmd.name.contains(&pattern)
+        let filtered: Vec<_> = cmds.iter().filter(|cmd| {
+            pattern.is_empty()
+                || cmd.name.to_lowercase().contains(&pattern)
                 || cmd.description.to_lowercase().contains(&pattern)
-            {
-                println!("{:30}  {}", cmd.name, cmd.description);
-            }
+        }).collect();
+
+        let max_name = filtered.iter().map(|c| c.name.len()).max().unwrap_or(20);
+        let width = max_name.max(10);
+        for cmd in &filtered {
+            let param_count = cmd.params.len();
+            let suffix = if param_count > 0 { format!(" ({param_count} params)") } else { String::new() };
+            println!("{:<width$}  {}{}",  cmd.name, cmd.description, suffix);
         }
         return Ok(());
     }
@@ -121,7 +158,7 @@ async fn run() -> Result<()> {
     let raw_args: Vec<String> = std::env::args().skip(1).collect();
     let global_value_flags = [
         "--mcp-stdio", "--mcp", "--spec", "--graphql",
-        "--auth-header", "--cache-ttl", "--jq", "--head", "--search", "--fields",
+        "--auth-header", "--header", "--base-url", "--cache-ttl", "--jq", "--head", "--search", "--fields",
     ];
     let global_bool_flags = ["--pretty", "--raw", "--refresh", "--list"];
 
@@ -172,7 +209,9 @@ fn build_global_parser() -> Command {
         .arg(Arg::new("mcp").long("mcp").value_name("URL").help("MCP server URL (HTTP/SSE)"))
         .arg(Arg::new("spec").long("spec").value_name("URL_OR_FILE").help("OpenAPI spec URL or file path"))
         .arg(Arg::new("graphql").long("graphql").value_name("URL").help("GraphQL endpoint URL"))
-        .arg(Arg::new("auth-header").long("auth-header").value_name("NAME:VALUE").action(ArgAction::Append).help("Auth header (repeatable)"))
+        .arg(Arg::new("auth-header").long("auth-header").value_name("NAME:VALUE").action(ArgAction::Append).help("Auth header with secret resolution (repeatable)"))
+        .arg(Arg::new("header").long("header").value_name("KEY:VALUE").action(ArgAction::Append).help("Arbitrary HTTP header (repeatable)"))
+        .arg(Arg::new("base-url").long("base-url").value_name("URL").help("Override base URL for OpenAPI spec"))
         .arg(Arg::new("pretty").long("pretty").action(ArgAction::SetTrue).help("Pretty-print JSON output"))
         .arg(Arg::new("raw").long("raw").action(ArgAction::SetTrue).help("Print raw string values"))
         .arg(Arg::new("refresh").long("refresh").action(ArgAction::SetTrue).help("Bypass cache, re-fetch"))
