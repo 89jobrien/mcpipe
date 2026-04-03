@@ -16,7 +16,7 @@ pub struct McpBackend {
 #[allow(dead_code)]
 enum McpTransport {
     Stdio { command: String },
-    Http  { url: String, auth_headers: Vec<(String, String)> },
+    Http  { url: String, headers: Vec<(String, String)> },
 }
 
 impl McpBackend {
@@ -24,8 +24,8 @@ impl McpBackend {
         Self { inner: McpTransport::Stdio { command } }
     }
 
-    pub fn from_http(url: String, auth_headers: Vec<(String, String)>) -> Self {
-        Self { inner: McpTransport::Http { url, auth_headers } }
+    pub fn from_http(url: String, headers: Vec<(String, String)>) -> Self {
+        Self { inner: McpTransport::Http { url, headers } }
     }
 
     async fn run_stdio_session<F, Fut>(&self, command: &str, f: F) -> Result<serde_json::Value, BackendError>
@@ -58,7 +58,7 @@ impl McpBackend {
         result
     }
 
-    async fn run_http_session<F, Fut>(&self, url: &str, auth_headers: &[(String, String)], f: F) -> Result<serde_json::Value, BackendError>
+    async fn run_http_session<F, Fut>(&self, url: &str, headers: &[(String, String)], f: F) -> Result<serde_json::Value, BackendError>
     where
         F: FnOnce(HttpSession) -> Fut,
         Fut: std::future::Future<Output = Result<serde_json::Value, BackendError>>,
@@ -74,7 +74,7 @@ impl McpBackend {
         // Build SSE client
         let mut builder = SseClientBuilder::for_url(url)
             .map_err(|e| BackendError::Transport(format!("SSE client build: {e}")))?;
-        for (name, value) in auth_headers {
+        for (name, value) in headers {
             builder = builder.header(name, value)
                 .map_err(|e| BackendError::Transport(format!("SSE header: {e}")))?;
         }
@@ -99,7 +99,7 @@ impl McpBackend {
             format!("{base_url}{post_path}")
         };
 
-        let session = HttpSession::new(post_url, auth_headers.to_vec(), stream);
+        let session = HttpSession::new(post_url, headers.to_vec(), stream);
         session.send_initialize().await?;
         f(session).await
     }
@@ -191,22 +191,24 @@ type SseStream = std::pin::Pin<Box<dyn futures::Stream<Item = Result<SSE, events
 
 struct HttpSession {
     post_url: String,
-    auth_headers: Vec<(String, String)>,
+    headers: Vec<(String, String)>,
     http_client: reqwest::Client,
     /// Pending response channels keyed by request id
     pending: std::sync::Arc<Mutex<std::collections::HashMap<u64, oneshot::Sender<serde_json::Value>>>>,
     next_id: Mutex<u64>,
-    /// SSE stream (driven by a background task)
-    _stream_task: tokio::task::JoinHandle<()>,
+    /// Abort handle for the background SSE stream task; aborted on drop.
+    _stream_abort: tokio::task::AbortHandle,
 }
 
 impl HttpSession {
-    fn new(post_url: String, auth_headers: Vec<(String, String)>, stream: SseStream) -> Self {
+    fn new(post_url: String, headers: Vec<(String, String)>, stream: SseStream) -> Self {
         let pending: std::sync::Arc<Mutex<std::collections::HashMap<u64, oneshot::Sender<serde_json::Value>>>> =
             std::sync::Arc::new(Mutex::new(std::collections::HashMap::new()));
         let pending_clone = pending.clone();
 
-        // Drive the SSE stream in background, routing responses to waiting senders
+        // Drive the SSE stream in background, routing responses to waiting senders.
+        // The AbortHandle is stored on HttpSession and aborted on drop; we drop the
+        // JoinHandle here so the task runs detached (abort_handle remains valid).
         let stream_task = tokio::spawn(async move {
             let mut stream = stream;
             while let Some(item) = stream.next().await {
@@ -227,11 +229,11 @@ impl HttpSession {
 
         Self {
             post_url,
-            auth_headers,
+            headers,
             http_client: reqwest::Client::new(),
             pending,
             next_id: Mutex::new(1),
-            _stream_task: stream_task,
+            _stream_abort: stream_task.abort_handle(),
         }
     }
 
@@ -257,7 +259,7 @@ impl HttpSession {
         let mut req = self.http_client.post(&self.post_url)
             .header("Content-Type", "application/json")
             .json(&msg);
-        for (name, value) in &self.auth_headers {
+        for (name, value) in &self.headers {
             req = req.header(name.as_str(), value.as_str());
         }
 
@@ -287,7 +289,7 @@ impl HttpSession {
         let mut req = self.http_client.post(&self.post_url)
             .header("Content-Type", "application/json")
             .json(&msg);
-        for (name, value) in &self.auth_headers {
+        for (name, value) in &self.headers {
             req = req.header(name.as_str(), value.as_str());
         }
         req.send().await
@@ -360,10 +362,10 @@ impl Backend for McpBackend {
                 }).await
                 .and_then(|v| serde_json::from_value(v).map_err(|e| BackendError::Schema(e.to_string())))
             }
-            McpTransport::Http { url, auth_headers } => {
+            McpTransport::Http { url, headers } => {
                 let url = url.clone();
-                let auth_headers = auth_headers.clone();
-                self.run_http_session(&url, &auth_headers, |session| async move {
+                let headers = headers.clone();
+                self.run_http_session(&url, &headers, |session| async move {
                     let result = session.send_request("tools/list", serde_json::json!({})).await?;
                     let tools = result.get("tools")
                         .and_then(|v| v.as_array())
@@ -391,11 +393,11 @@ impl Backend for McpBackend {
                     Ok(result.get("content").cloned().unwrap_or(result))
                 }).await
             }
-            McpTransport::Http { url, auth_headers } => {
+            McpTransport::Http { url, headers } => {
                 let url = url.clone();
-                let auth_headers = auth_headers.clone();
+                let headers = headers.clone();
                 let tool_name = cmd.source_name.clone();
-                self.run_http_session(&url, &auth_headers, |session| async move {
+                self.run_http_session(&url, &headers, |session| async move {
                     let result = session.send_request("tools/call", serde_json::json!({
                         "name": tool_name,
                         "arguments": args,
