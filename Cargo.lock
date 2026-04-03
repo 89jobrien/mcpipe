@@ -965,6 +965,7 @@ dependencies = [
  "clap",
  "dirs",
  "eventsource-client",
+ "futures",
  "hex",
  "json5",
  "reqwest",
@@ -976,6 +977,7 @@ dependencies = [
  "thiserror",
  "tokio",
  "toml",
+ "url",
 ]
 
 [[package]]
