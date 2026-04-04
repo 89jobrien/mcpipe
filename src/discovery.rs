@@ -21,6 +21,8 @@ pub enum BackendKind {
     OpenApiFile { path: String },
     /// GraphQL endpoint URL.
     GraphQL { url: String },
+    /// CLI tool exposing a `schema` subcommand.
+    Cli { command: String },
 }
 
 impl DiscoveredSource {
@@ -37,7 +39,26 @@ impl DiscoveredSource {
                 use crate::backend::graphql::GraphQlBackend;
                 Box::new(GraphQlBackend::new(url, vec![]))
             }
+            BackendKind::Cli { command } => {
+                use crate::backend::cli::CliBackend;
+                Box::new(CliBackend::new(command))
+            }
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn cli_backend_kind_into_backend() {
+        let source = DiscoveredSource {
+            name: "doob".to_string(),
+            kind: BackendKind::Cli { command: "doob".to_string() },
+            origin: "manual".to_string(),
+        };
+        let _backend = source.into_backend();
     }
 }
 
