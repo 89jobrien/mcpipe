@@ -98,7 +98,7 @@ items:
   name: cli-backend-pr
   priority: P1
   status: done
-  title: Merge PR #1
+  title: Merge PR
   description: |
     PR #1 (feat/cli-backend) adds CliBackend, openapi_gen module, and --cli/--gen-openapi
     flags. After merge: run mcpipe --cli doob --gen-openapi --openapi-output doob.openapi.yaml
@@ -111,16 +111,21 @@ items:
   extra:
   - date: 2026-04-04
     type: note
-    note: doob binary PATH quirk — mise shim may shadow cargo-installed doob. Verify with `which doob` if integration tests fail in a fresh shell.
+    note: doob binary PATH quirk — mise shim may shadow cargo-installed doob.
   - date: 2026-04-04
     type: note
     note: PR merged. doob#2 merged first (provides schema command).
+  - date: 2026-04-04
+    type: human-edit
+    field: status
+    value: done
+    note: PR #1 merged via gh pr merge. doob sync keeps reverting to open.
   completed: 2026-04-04
 - id: mcpipe-15
   doob_uuid: 8e47e750-8d2f-471a-952f-6caf0f1a047e
   name: baml-integration-plan
   priority: P2
-  status: open
+  status: done
   title: Write doob.baml in devloop using generated OpenAPI spec
   description: |
     Once mcpipe PR #1 and doob PR #2 merge:
@@ -135,7 +140,14 @@ items:
   extra:
   - date: 2026-04-04
     type: note
-    note: Both PRs merged (doob#2 → mcpipe#1). Ready to run mcpipe --cli doob --gen-openapi.
+    note: Both PRs merged (doob#2 -> mcpipe#1). doob.openapi.yaml generated (406 lines, 16 endpoints). doob.baml written in devloop (6 classes, 6 functions, CustomHaiku). Sentinel review passed.
+  - date: 2026-04-04
+    type: human-edit
+    field: status
+    value: done
+    note: OpenAPI spec generated and doob.baml committed. doob sync keeps reverting to open.
+  completed: 2026-04-04
+  completed: 2026-04-04
 - id: mcpipe-8
   doob_uuid: bd582b04-47c9-4b5c-b9e4-8ce38661312f
   name: argv-strip-round-trip-test
@@ -199,6 +211,12 @@ items:
     type: note
     note: Superseded by conductor task 2tgau6uz7crk3laphvol.
 log:
+- date: 2026-04-04
+  summary: Generated doob.openapi.yaml (16 endpoints), wrote doob.baml in devloop (6 functions, haiku). Merged both PRs. All open items done — only P3 parked items remain.
+  commits:
+  - 35f6ce5
+  - efb1d8e
+  - c0b72a6
 - date: 2026-04-04
   summary: Merged both PRs (doob#2 → mcpipe#1). Worktrees cleaned. Ready for doob.openapi.yaml generation and doob.baml BAML integration.
 - date: 2026-04-04
