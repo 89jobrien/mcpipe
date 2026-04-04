@@ -1,3 +1,4 @@
 /target
 .remember/logs/autonomous
 .worktrees/
+.ctx/
