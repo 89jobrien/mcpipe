@@ -28,6 +28,7 @@ async fn run() -> Result<()> {
     let jq = matches.get_one::<String>("jq").cloned();
     let head = matches.get_one::<usize>("head").copied();
     let list_only = matches.get_flag("list");
+    let scan_mode = matches.get_flag("scan");
     let search = matches.get_one::<String>("search").cloned();
     let refresh = matches.get_flag("refresh");
     let cache_ttl = *matches.get_one::<u64>("cache-ttl").unwrap_or(&3600);
@@ -58,6 +59,10 @@ async fn run() -> Result<()> {
 
     // Merge auth + extra headers
     let all_headers: Vec<(String, String)> = auth_headers.iter().cloned().chain(extra_headers).collect();
+
+    if scan_mode {
+        return run_scan().await;
+    }
 
     // Build backend
     let backend: Box<dyn Backend> = if let Some(cmd) = matches.get_one::<String>("mcp-stdio") {
@@ -160,7 +165,7 @@ async fn run() -> Result<()> {
         "--mcp-stdio", "--mcp", "--spec", "--graphql",
         "--auth-header", "--header", "--base-url", "--cache-ttl", "--jq", "--head", "--search", "--fields",
     ];
-    let global_bool_flags = ["--pretty", "--raw", "--refresh", "--list"];
+    let global_bool_flags = ["--pretty", "--raw", "--refresh", "--list", "--scan"];
 
     let mut tool_args = vec!["mcpipe".to_string()];
     let mut skip_next = false;
@@ -216,12 +221,81 @@ fn build_global_parser() -> Command {
         .arg(Arg::new("raw").long("raw").action(ArgAction::SetTrue).help("Print raw string values"))
         .arg(Arg::new("refresh").long("refresh").action(ArgAction::SetTrue).help("Bypass cache, re-fetch"))
         .arg(Arg::new("list").long("list").action(ArgAction::SetTrue).help("List available subcommands"))
+        .arg(Arg::new("scan").long("scan").action(ArgAction::SetTrue)
+            .help("Auto-discover all API surfaces and print a unified catalog"))
         .arg(Arg::new("search").long("search").value_name("PATTERN").help("Search commands by name/description"))
         .arg(Arg::new("cache-ttl").long("cache-ttl").value_name("SECS").value_parser(clap::value_parser!(u64)).help("Cache TTL in seconds (default: 3600)"))
         .arg(Arg::new("jq").long("jq").value_name("EXPR").help("Filter output through jq"))
         .arg(Arg::new("head").long("head").value_name("N").value_parser(clap::value_parser!(usize)).help("Limit output to first N array elements"))
         .arg(Arg::new("fields").long("fields").value_name("FIELDS").help("Override GraphQL selection set fields"))
         .allow_external_subcommands(true)
+}
+
+async fn run_scan() -> anyhow::Result<()> {
+    use mcpipe::scanner::claude_config::ClaudeConfigScanner;
+    use mcpipe::scanner::workspace::WorkspaceScanner;
+    use mcpipe::scanner::well_known::WellKnownScanner;
+    use mcpipe::discovery::SourceScanner;
+
+    eprintln!("Scanning for API surfaces...");
+
+    let scanners: Vec<Box<dyn SourceScanner>> = vec![
+        Box::new(ClaudeConfigScanner::default_env()),
+        Box::new(WorkspaceScanner::default_env()),
+        Box::new(WellKnownScanner::new()),
+    ];
+
+    let scan_futures: Vec<_> = scanners.iter().map(|s| s.scan()).collect();
+    let all_results = futures::future::join_all(scan_futures).await;
+
+    let mut all_sources: Vec<_> = all_results.into_iter().flatten().collect();
+    all_sources.sort_by(|a, b| a.name.cmp(&b.name));
+
+    if all_sources.is_empty() {
+        println!("No API surfaces found.");
+        return Ok(());
+    }
+
+    eprintln!("Found {} source(s). Discovering tools...\n", all_sources.len());
+
+    let discover_futures: Vec<_> = all_sources.iter().map(|src| {
+        let backend = src.clone().into_backend();
+        let name = src.name.clone();
+        let origin = src.origin.clone();
+        async move {
+            let result = tokio::time::timeout(
+                std::time::Duration::from_secs(10),
+                backend.discover(),
+            ).await;
+            (name, origin, result)
+        }
+    }).collect();
+
+    let results = futures::future::join_all(discover_futures).await;
+
+    let mut total = 0usize;
+    for (name, origin, result) in &results {
+        match result {
+            Ok(Ok(cmds)) => {
+                println!("## {} ({})", name, origin);
+                let max_w = cmds.iter().map(|c| c.name.len()).max().unwrap_or(10).max(10);
+                for cmd in cmds {
+                    println!("  {:<width$}  {}", cmd.name, cmd.description, width = max_w);
+                }
+                println!("  ({} tools)\n", cmds.len());
+                total += cmds.len();
+            }
+            Ok(Err(e)) => {
+                println!("## {} — ERROR: {}\n", name, e);
+            }
+            Err(_) => {
+                println!("## {} — TIMEOUT (>10s)\n", name);
+            }
+        }
+    }
+
+    println!("Total: {} tools across {} sources.", total, results.len());
+    Ok(())
 }
 
 async fn fetch_spec(url: &str, auth_headers: &[(String, String)]) -> Result<serde_json::Value> {

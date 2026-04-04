@@ -23,6 +23,24 @@ pub enum BackendKind {
     GraphQL { url: String },
 }
 
+impl DiscoveredSource {
+    pub fn into_backend(self) -> Box<dyn crate::backend::Backend> {
+        use crate::backend::mcp::McpBackend;
+        match self.kind {
+            BackendKind::McpStdio { command } => Box::new(McpBackend::from_stdio(command)),
+            BackendKind::McpHttp { url } => Box::new(McpBackend::from_http(url, vec![])),
+            BackendKind::OpenApiFile { path } => {
+                use crate::backend::openapi::OpenApiBackend;
+                Box::new(OpenApiBackend::from_file(&path).expect("openapi load"))
+            }
+            BackendKind::GraphQL { url } => {
+                use crate::backend::graphql::GraphQlBackend;
+                Box::new(GraphQlBackend::new(url, vec![]))
+            }
+        }
+    }
+}
+
 /// Port: anything that can produce a list of DiscoveredSources.
 #[async_trait]
 pub trait SourceScanner: Send + Sync {
