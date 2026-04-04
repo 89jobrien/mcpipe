@@ -113,6 +113,9 @@ items:
   - date: 2026-04-04
     type: note
     note: doob binary PATH quirk — mise shim may shadow cargo-installed doob. Verify with `which doob` if integration tests fail in a fresh shell.
+  - date: 2026-04-04
+    type: blocker
+    note: Blocked on doob PR #2 merge. Doob must export schema command for mcpipe CLI backend to discover it.
 - id: mcpipe-15
   doob_uuid: 8e47e750-8d2f-471a-952f-6caf0f1a047e
   name: baml-integration-plan
@@ -129,7 +132,10 @@ items:
     Repeat for obfsck, devkit, minibox once they get schema subcommands.
   files:
   - docs/superpowers/plans/2026-04-04-cli-backend-openapi-gen.md
-  extra: []
+  extra:
+  - date: 2026-04-04
+    type: blocker
+    note: Blocked on both mcpipe PR #1 and doob PR #2. Merge order critical: doob PR #2 first (mcpipe depends on doob schema command), then mcpipe PR #1.
 - id: mcpipe-8
   doob_uuid: bd582b04-47c9-4b5c-b9e4-8ce38661312f
   name: argv-strip-round-trip-test
