@@ -1,3 +1,4 @@
+pub mod scanner;
 pub mod deser;
 pub mod discovery;
 pub mod domain;
