@@ -116,6 +116,10 @@ async fn run() -> Result<()> {
     let gen_openapi = matches.get_flag("gen-openapi");
     let openapi_output = matches.get_one::<String>("openapi-output").cloned();
 
+    if gen_openapi && matches.get_one::<String>("cli").is_none() {
+        bail!("--gen-openapi requires --cli <COMMAND>");
+    }
+
     if gen_openapi {
         let commands = backend.discover().await
             .context("discovering commands for OpenAPI generation")?;
