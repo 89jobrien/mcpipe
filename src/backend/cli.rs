@@ -96,7 +96,9 @@ impl Backend for CliBackend {
     async fn execute(&self, cmd: &CommandDef, args: ArgMap) -> Result<serde_json::Value, BackendError> {
         use tokio::process::Command;
 
-        // "todo-list" -> ["todo", "list"]
+        // "todo-list" -> ["todo", "list"]; single-word "search" -> ["search"].
+        // Constraint: command names with >1 hyphen (e.g. "todo-add-tag") are not supported —
+        // the manifest must use at most one level of nesting.
         let parts: Vec<&str> = cmd.name.splitn(2, '-').collect();
         let mut argv: Vec<String> = parts.iter().map(|s| s.to_string()).collect();
         argv.push("--json".to_string());
