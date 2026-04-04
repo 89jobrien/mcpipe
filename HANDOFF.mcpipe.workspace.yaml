@@ -97,7 +97,8 @@ items:
   doob_uuid: dabd3d1e-7ae2-4b45-bc3f-755ea36150f4
   name: cli-backend-pr
   priority: P1
-  status: open
+  status: done
+  completed: 2026-04-04
   title: Merge PR
   description: |
     PR #1 (feat/cli-backend) adds CliBackend, openapi_gen module, and --cli/--gen-openapi
@@ -114,8 +115,8 @@ items:
     type: note
     note: doob binary PATH quirk — mise shim may shadow cargo-installed doob. Verify with `which doob` if integration tests fail in a fresh shell.
   - date: 2026-04-04
-    type: blocker
-    note: Blocked on doob PR #2 merge. Doob must export schema command for mcpipe CLI backend to discover it.
+    type: note
+    note: PR #1 merged successfully. doob#2 merged first (provides schema command).
 - id: mcpipe-15
   doob_uuid: 8e47e750-8d2f-471a-952f-6caf0f1a047e
   name: baml-integration-plan
@@ -134,8 +135,8 @@ items:
   - docs/superpowers/plans/2026-04-04-cli-backend-openapi-gen.md
   extra:
   - date: 2026-04-04
-    type: blocker
-    note: Blocked on both mcpipe PR #1 and doob PR #2. Merge order critical: doob PR #2 first (mcpipe depends on doob schema command), then mcpipe PR #1.
+    type: note
+    note: Both PRs merged (doob#2 → mcpipe#1). Ready to run mcpipe --cli doob --gen-openapi.
 - id: mcpipe-8
   doob_uuid: bd582b04-47c9-4b5c-b9e4-8ce38661312f
   name: argv-strip-round-trip-test
@@ -199,6 +200,8 @@ items:
     type: note
     note: Superseded by conductor task 2tgau6uz7crk3laphvol.
 log:
+- date: 2026-04-04
+  summary: 'Merged both PRs (doob#2 → mcpipe#1). Worktrees cleaned. Ready for doob.openapi.yaml generation and doob.baml BAML integration.'
 - date: 2026-04-04
   summary: 'Built CliBackend + OpenAPI generator. PRs open: mcpipe#1 (feat/cli-backend), doob#2 (feat/cli-schema). Next — merge PRs, generate doob.openapi.yaml, write doob.baml in devloop with haiku client.'
   commits:
