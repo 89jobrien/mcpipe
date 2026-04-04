@@ -140,6 +140,7 @@ items:
   files:
   - src/backend/mcp.rs
   extra: []
+  completed: 2026-04-04
 - id: mcpipe-13
   doob_uuid: c4aa5b7b-9245-4647-84c0-15efaf06d957
   name: maestro-api-openapi-spec
