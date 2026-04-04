@@ -308,6 +308,12 @@ impl HttpSession {
     }
 }
 
+impl Drop for HttpSession {
+    fn drop(&mut self) {
+        self._stream_abort.abort();
+    }
+}
+
 fn tools_to_commands(tools: &[serde_json::Value]) -> Vec<CommandDef> {
     tools.iter().map(|tool| {
         let name = tool.get("name").and_then(|v| v.as_str()).unwrap_or("tool");
