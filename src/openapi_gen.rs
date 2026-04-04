@@ -65,10 +65,14 @@ fn build_post_operation(cmd: &CommandDef) -> serde_json::Value {
     let mut required_fields: Vec<serde_json::Value> = vec![];
 
     for p in &cmd.params {
-        properties.insert(p.name.clone(), serde_json::json!({
-            "description": p.description,
-            "schema": p.schema,
-        }));
+        let mut prop = serde_json::Map::new();
+        prop.insert("description".to_string(), serde_json::Value::String(p.description.clone()));
+        if let serde_json::Value::Object(schema_fields) = &p.schema {
+            for (k, v) in schema_fields {
+                prop.insert(k.clone(), v.clone());
+            }
+        }
+        properties.insert(p.name.clone(), serde_json::Value::Object(prop));
         if p.required {
             required_fields.push(serde_json::Value::String(p.name.clone()));
         }
@@ -170,7 +174,10 @@ mod tests {
         let path = &doc["paths"]["/todo-add"];
         assert!(path["post"].is_object(), "todo-add (has required param) should be POST");
         let body = &path["post"]["requestBody"]["content"]["application/json"]["schema"];
-        assert!(body["properties"]["content"].is_object());
+        assert_eq!(body["properties"]["content"]["type"], "string");
+        assert!(body["properties"]["content"]["description"].is_string());
+        // Must NOT have a nested "schema" key:
+        assert!(body["properties"]["content"].get("schema").is_none());
     }
 
     #[test]
