@@ -1,6 +1,7 @@
+pub mod cli;
+pub mod graphql;
 pub mod mcp;
 pub mod openapi;
-pub mod graphql;
 
 use async_trait::async_trait;
 use crate::domain::{ArgMap, BackendError, CommandDef};

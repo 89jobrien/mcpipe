@@ -7,3 +7,4 @@ pub mod secret;
 pub mod format;
 pub mod cache;
 pub mod cli;
+pub mod openapi_gen;

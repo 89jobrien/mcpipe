@@ -106,9 +106,38 @@ async fn run() -> Result<()> {
             b = b.with_auth_headers(all_headers.clone());
             Box::new(b)
         }
+    } else if let Some(cli_cmd) = matches.get_one::<String>("cli") {
+        use mcpipe::backend::cli::CliBackend;
+        Box::new(CliBackend::new(cli_cmd.clone()))
     } else {
-        bail!("specify one of --mcp-stdio, --mcp, --spec, or --graphql");
+        bail!("specify one of --mcp-stdio, --mcp, --spec, --graphql, or --cli");
     };
+
+    let gen_openapi = matches.get_flag("gen-openapi");
+    let openapi_output = matches.get_one::<String>("openapi-output").cloned();
+
+    if gen_openapi && matches.get_one::<String>("cli").is_none() {
+        bail!("--gen-openapi requires --cli <COMMAND>");
+    }
+
+    if gen_openapi {
+        let commands = backend.discover().await
+            .context("discovering commands for OpenAPI generation")?;
+        let tool_name = matches.get_one::<String>("cli")
+            .map(|s| s.as_str())
+            .unwrap_or("api");
+        let doc = mcpipe::openapi_gen::generate(tool_name, "0.1.0", &commands);
+        let yaml = mcpipe::openapi_gen::to_yaml(&doc)
+            .context("serializing OpenAPI spec to YAML")?;
+        if let Some(path) = openapi_output {
+            std::fs::write(&path, &yaml)
+                .with_context(|| format!("writing OpenAPI spec to {path}"))?;
+            eprintln!("Wrote OpenAPI spec to {path}");
+        } else {
+            print!("{yaml}");
+        }
+        return Ok(());
+    }
 
     // Cache source key (only for non-stdio backends)
     let cache_source = matches.get_one::<String>("mcp")
@@ -164,8 +193,9 @@ async fn run() -> Result<()> {
     let global_value_flags = [
         "--mcp-stdio", "--mcp", "--spec", "--graphql",
         "--auth-header", "--header", "--base-url", "--cache-ttl", "--jq", "--head", "--search", "--fields",
+        "--cli", "--openapi-output",
     ];
-    let global_bool_flags = ["--pretty", "--raw", "--refresh", "--list", "--scan"];
+    let global_bool_flags = ["--pretty", "--raw", "--refresh", "--list", "--scan", "--gen-openapi"];
 
     let mut tool_args = vec!["mcpipe".to_string()];
     let mut skip_next = false;
@@ -228,6 +258,26 @@ fn build_global_parser() -> Command {
         .arg(Arg::new("jq").long("jq").value_name("EXPR").help("Filter output through jq"))
         .arg(Arg::new("head").long("head").value_name("N").value_parser(clap::value_parser!(usize)).help("Limit output to first N array elements"))
         .arg(Arg::new("fields").long("fields").value_name("FIELDS").help("Override GraphQL selection set fields"))
+        .arg(
+            Arg::new("cli")
+                .long("cli")
+                .value_name("COMMAND")
+                .help("CLI tool exposing a `schema` subcommand (e.g. doob)")
+                .num_args(1),
+        )
+        .arg(
+            Arg::new("gen-openapi")
+                .long("gen-openapi")
+                .action(ArgAction::SetTrue)
+                .help("Generate OpenAPI 3.1 spec from discovered commands and print to stdout"),
+        )
+        .arg(
+            Arg::new("openapi-output")
+                .long("openapi-output")
+                .value_name("FILE")
+                .help("Write generated OpenAPI spec to FILE instead of stdout")
+                .num_args(1),
+        )
         .allow_external_subcommands(true)
 }
 
