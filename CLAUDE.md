@@ -18,4 +18,7 @@
 ## Quirks
 - `--list` output includes descriptions; to extract tool names: `grep -E '^[a-z][a-z0-9-]+\s' | awk '{print $1}'`
 - Pieces MCP exposes ~35 real tools (full-text search, vector search, batch snapshot, LTM)
-- `HANDOFF.md` tracks known gaps and remaining work
+- Integration tests: `cargo test --features integration`
+- Maestro API spec + docs: `maestro-api/maestro-api.openapi.yaml` and `maestro-api/API.md`
+- `HANDOFF.mcpipe.workspace.yaml` tracks open items; sync with
+  `doob handoff sync --file HANDOFF.mcpipe.workspace.yaml`
