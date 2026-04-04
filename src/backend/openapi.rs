@@ -30,6 +30,16 @@ impl OpenApiBackend {
         Self { spec, base_url, auth_headers }
     }
 
+    pub fn with_base_url(mut self, base_url: String) -> Self {
+        self.base_url = base_url;
+        self
+    }
+
+    pub fn with_auth_headers(mut self, headers: Vec<(String, String)>) -> Self {
+        self.auth_headers = headers;
+        self
+    }
+
     fn build_commands(&self) -> Result<Vec<CommandDef>, BackendError> {
         let spec = resolve_refs(&self.spec);
         let paths = spec.get("paths")

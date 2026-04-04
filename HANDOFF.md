@@ -12,6 +12,8 @@
 - Secret resolution: `env:VAR`, `file:/path`, literal passthrough
 - Multi-format deserialization (`src/deser.rs`): Content-Type + URL extension hint, fallback chain
 - 28 tests passing; GitHub repo at `https://github.com/89jobrien/mcpipe`
+- `McpBackend`: HTTP/SSE transport (`HttpSession`) — connects to SSE endpoint, waits for `endpoint` event, POSTs JSON-RPC 2.0, routes responses via background stream task + oneshot channels
+- Verified against Pieces MCP (`http://localhost:39300/model_context_protocol/2024-11-05/sse`): ~35 tools discovered, execute round-trip confirmed
 
 ---
 
@@ -27,17 +29,9 @@
 
 ---
 
-### 2. MCP HTTP/SSE transport
+### ~~2. MCP HTTP/SSE transport~~ ✅ DONE (2026-04-03)
 
-**Problem:** `McpBackend::from_http()` returns `Err(BackendError::Transport("MCP HTTP transport not yet implemented"))`.
-
-**Fix:** Implement two sub-modes:
-- **HTTP**: POST JSON-RPC to `{url}/rpc` (or configurable path), use `reqwest`.
-- **SSE**: Connect to `{url}/sse`, parse `eventsource-client` stream for JSON-RPC responses. `eventsource-client` is already in `Cargo.toml`.
-
-MCP HTTP is JSON-RPC 2.0 — same message structure as stdio, different transport layer. `send_request` / `send_notification` / `send_initialize` logic can be shared with stdio.
-
-**Files:** `src/backend/mcp.rs` — add `HttpSession` struct alongside `StdioSession`.
+`HttpSession` implemented in `src/backend/mcp.rs`. Connects to SSE endpoint, waits for `endpoint` event, POSTs JSON-RPC 2.0 via `reqwest`, routes responses from background SSE stream via oneshot channels. Verified against Pieces MCP.
 
 ---
 
@@ -71,10 +65,44 @@ MCP HTTP is JSON-RPC 2.0 — same message structure as stdio, different transpor
 
 ---
 
-### 6. `--list`/`--search` output polish
+### ~~6. `--list`/`--search` output polish~~ ✅ DONE (2026-04-03)
 
-**Current:** Prints bare command names one per line.
+Aligned two-column output with description; case-insensitive `--search` working.
 
-**Fix:** Print `name  —  description` aligned in two columns (use `max name length` for padding). `--search PATTERN` already filters by substring — add case-insensitive match. Optional: show param count or required params summary.
+---
 
-**Files:** `src/main.rs` (list/search render block).
+## scan-all Feature — 2026-04-04 ✅ COMPLETE
+
+The `--scan` / scan-all feature is fully implemented and all 35 tests pass.
+
+### What was built
+
+- `DiscoveredSource` domain type and `SourceScanner` port (`src/domain.rs`)
+- `ClaudeConfigScanner` — reads Claude Desktop/Code MCP server config files
+- `WorkspaceScanner` — finds OpenAPI specs (JSON/YAML) in a workspace directory
+- `WellKnownScanner` — probes local HTTP endpoints for live MCP servers (Pieces MCP, etc.)
+- `--scan` flag in `main.rs` wiring all scanners into a unified discovery report
+
+### Known gap — deferred
+
+**GraphQL endpoint heuristics** are not implemented. There is no reliable way to detect a GraphQL
+endpoint without sending a speculative introspection query, which has side effects on some servers.
+Deferred until a safe probe strategy is identified (e.g. OPTIONS + content-type check before
+committing to introspection).
+
+---
+
+## Sentinel Review — 2026-04-03
+
+### Blocking
+
+- [`src/main.rs:60` / `src/backend/mcp.rs:19`] `McpTransport::Http` field named `auth_headers` but receives the merged `all_headers` (auth + user `--header` values). Naming mismatch will cause maintenance bugs — rename field to `headers`.
+- [`src/backend/mcp.rs:138,171`] `_stream_task` `JoinHandle` is never `.await`ed or `.abort()`ed on drop. If the SSE stream task panics, in-flight `oneshot::Sender`s are abandoned and the session is silently dead for its lifetime. Add an abort handle or structured shutdown signal.
+
+### Suggestions
+
+- [`src/main.rs:158–184`] Manual argv stripping for global flags must be kept in sync with `build_global_parser` by hand. A mismatch silently passes unknown flags into the dynamic subcommand parser. Consider deriving the strip list from the parser or adding a round-trip test.
+- [`src/main.rs:77–94`] Relative-URL resolution logic is duplicated between `main.rs` and `mcp.rs`. Extract a `resolve_relative_url(base, path) -> String` utility in `src/lib.rs`.
+- [`src/backend/openapi.rs:180`] `reqwest::Client::new()` on every `execute` call allocates a new connection pool. Build the client once in `from_file`/`from_json` and store it on the struct.
+- [`src/backend/mcp.rs:44`] Child stderr discarded via `Stdio::null()`. Stdio server diagnostics are invisible on crash. Consider forwarding to `eprintln!` via a background reader.
+- [`src/backend/openapi.rs:174`] `ParamLocation::Header` params parsed from spec but never injected into outgoing requests — add a `// TODO` comment so it's not mistaken for intentional behavior.

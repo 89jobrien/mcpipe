@@ -20,6 +20,15 @@ pub fn build_command(app_name: &str, cmds: &[CommandDef]) -> Command {
             sub = sub.arg(arg);
         }
 
+        // Per-subcommand --fields override for GraphQL selection sets
+        sub = sub.arg(
+            Arg::new("__fields")
+                .long("fields")
+                .value_name("FIELDS")
+                .required(false)
+                .help("GraphQL selection set fields (e.g. 'id name createdAt')"),
+        );
+
         app = app.subcommand(sub);
     }
 
@@ -67,6 +76,11 @@ pub fn extract_args(matches: &ArgMatches, cmd: &CommandDef) -> ArgMap {
             let coerced = coerce(raw, &param.schema);
             map.insert(param.original_name.clone(), coerced);
         }
+    }
+
+    // Capture per-subcommand --fields override as a special key
+    if let Some(fields) = matches.get_one::<String>("__fields") {
+        map.insert("__fields".to_string(), serde_json::Value::String(fields.clone()));
     }
 
     map

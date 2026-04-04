@@ -1,0 +1,10 @@
+{
+  "mcpServers": {
+    "devloop-pipeline": {
+      "type": "stdio",
+      "command": "devloop",
+      "args": ["mcp-server"],
+      "env": {}
+    }
+  }
+}

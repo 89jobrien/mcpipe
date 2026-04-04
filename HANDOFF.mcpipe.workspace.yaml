@@ -1,0 +1,181 @@
+project: mcpipe
+id: mcpipe
+updated: 2026-04-04
+branch: main
+state:
+  tests: 28 passing (31 with --features integration)
+  build: clean
+  notes: |
+    Used mcpipe against local + staging Maestro API. OpenAPI spec + API.md written at maestro-api/. AbortHandle Drop impl still missing (sentinel P1 open).
+items:
+- id: mcpipe-6
+  doob_uuid: a8aefce8-b10e-4960-bac3-137e6ad10f5d
+  name: auth-headers-field-rename
+  priority: P1
+  status: done
+  title: Rename McpTransport::Http `auth_headers` field to `headers`
+  files: []
+  extra: []
+  completed: 2026-04-03
+- id: mcpipe-7
+  doob_uuid: bfa8abff-beac-42db-a4a6-5473603f4593
+  name: stream-task-abort-handle
+  priority: P1
+  status: done
+  title: Add abort handle for detached SSE stream JoinHandle
+  files: []
+  extra: []
+  completed: 2026-04-03
+- id: mcpipe-1
+  doob_uuid: e75707a2-cab5-42cc-a2f6-d522b88b4bcc
+  name: openapi-relative-server-url
+  priority: P1
+  status: done
+  title: Relative `servers[0].url` in OpenAPI specs breaks HTTP requests
+  files: []
+  extra: []
+  completed: 2026-04-03
+- id: mcpipe-2
+  doob_uuid: 4d50bdaa-f30a-4e1c-ab5a-7d7d307f1205
+  name: arbitrary-request-headers
+  priority: P1
+  status: done
+  title: Add `--header KEY:VALUE` flag for arbitrary HTTP headers
+  files: []
+  extra: []
+  completed: 2026-04-03
+- id: mcpipe-3
+  doob_uuid: f6d25648-4dd2-4052-85b7-46a1574ab778
+  name: graphql-fields-override
+  priority: P2
+  status: done
+  title: Wire `--fields` override for GraphQL selection sets
+  files: []
+  extra: []
+  completed: 2026-04-03
+- id: mcpipe-4
+  doob_uuid: 86e70cf8-0efe-4984-bb12-d588269d727d
+  name: integration-test-feature-gate
+  priority: P2
+  status: done
+  title: Integration tests behind `--features integration` flag
+  files: []
+  extra: []
+  completed: 2026-04-03
+- id: mcpipe-5
+  doob_uuid: cc8755c6-8ee5-4aad-b44c-2353c52af326
+  name: list-search-output-polish
+  priority: P2
+  status: done
+  title: Polish `--list`/`--search` output with aligned columns
+  files: []
+  extra: []
+  completed: 2026-04-03
+- id: mcpipe-8
+  doob_uuid: bd582b04-47c9-4b5c-b9e4-8ce38661312f
+  name: argv-strip-round-trip-test
+  priority: P3
+  status: parked
+  title: Add round-trip test for global-flag argv stripping
+  description: |
+    Manual argv stripping in main.rs must be kept in sync with build_global_parser by hand. A mismatch silently passes unknown flags into the dynamic subcommand parser. Consider deriving the strip list from the parser or adding a round-trip test.
+  files:
+  - src/main.rs
+  extra:
+  - date: 2026-04-03
+    type: note
+    note: Superseded by conductor task xzo88d4ls8hu6h1lo3ft (same finding, better description).
+- id: mcpipe-9
+  doob_uuid: cf4c35f5-1806-4dcb-b260-e26f47836439
+  name: reqwest-client-per-call
+  priority: P3
+  status: parked
+  title: Build reqwest::Client once in OpenApiBackend, not per execute call
+  description: |
+    reqwest::Client::new() on every execute call allocates a new connection pool. Build the client once in from_file/from_json and store it on the struct.
+  files:
+  - src/backend/openapi.rs
+  extra:
+  - date: 2026-04-03
+    type: note
+    note: Superseded by conductor task 15poox8e4xlmpxdqu2ot.
+- id: mcpipe-10
+  doob_uuid: 6bdc3a43-becb-47be-8e7c-a25421b609d3
+  name: header-param-injection
+  priority: P3
+  status: parked
+  title: Inject ParamLocation::Header params into outgoing OpenAPI requests
+  description: |
+    ParamLocation::Header params are parsed from the spec but never injected into outgoing requests. Add a TODO comment so it's not mistaken for intentional behavior.
+  files:
+  - src/backend/openapi.rs
+  extra:
+  - date: 2026-04-03
+    type: note
+    note: Superseded by conductor task 1ezidbsqfljp81cki67k.
+- id: mcpipe-11
+  doob_uuid: ea49882b-0887-48ce-adf3-1f05980ac2af
+  name: stdio-child-stderr-forwarding
+  priority: P3
+  status: parked
+  title: Forward stdio MCP child stderr instead of discarding via Stdio::null()
+  description: |
+    Child stderr is discarded via Stdio::null(). Stdio server diagnostics are invisible on crash. Consider forwarding to eprintln! via a background reader.
+  files:
+  - src/backend/mcp.rs
+  extra:
+  - date: 2026-04-03
+    type: note
+    note: Superseded by conductor task 2tgau6uz7crk3laphvol.
+- id: mcpipe-12
+  doob_uuid: 6ef6f2b5-645c-4a3d-b374-1777c7ce79af
+  name: abort-handle-drop-impl
+  priority: P1
+  status: open
+  title: Add `impl Drop for HttpSession` calling `self._stream_abort.abort()`
+  description: |
+    AbortHandle is stored on HttpSession but never fired — no Drop impl exists.
+    The SSE background task leaks on every session drop. Fix: add
+    `impl Drop for HttpSession { fn drop(&mut self) { self._stream_abort.abort(); } }`
+  files:
+  - src/backend/mcp.rs
+  extra: []
+  completed: 2026-04-04
+- id: mcpipe-13
+  doob_uuid: c4aa5b7b-9245-4647-84c0-15efaf06d957
+  name: maestro-api-openapi-spec
+  priority: P2
+  status: done
+  title: Write OpenAPI spec and API.md for maestro-api
+  description: |
+    OpenAPI spec covering all 25 endpoints at maestro-api/maestro-api.openapi.yaml.
+    API.md documents all endpoints with live response shapes, error codes,
+    session lifecycle, and mcpipe usage examples. Verified against local debug
+    server (port 8090) and staging (api.maestro-staging.toptal.net).
+  files:
+  - maestro-api/maestro-api.openapi.yaml
+  - maestro-api/API.md
+  extra: []
+  completed: 2026-04-04
+log:
+- date: 2026-04-04
+  summary: |
+    Started local maestro-api (port 8090, debug build). Wrote OpenAPI spec (25 endpoints) and API.md. Verified mcpipe against local + staging Maestro API — create-session round-trip confirmed on staging K8s. Discovered AbortHandle Drop impl still missing (mcpipe-12).
+- date: 2026-04-03
+  summary: 'mcpipe-6 + mcpipe-7 done: renamed auth_headers → headers throughout McpTransport::Http; replaced _stream_task JoinHandle with AbortHandle (aborted on drop). 28 tests passing.'
+  commits:
+  - 3ae52cc
+- date: 2026-04-03
+  summary: 'Sentinel review: 2 blocking issues found (auth_headers field rename, detached JoinHandle). 5 suggestions logged.'
+- date: 2026-04-03
+  summary: Completed all 5 open items — relative URL fix, --header flag, --fields per-subcommand, integration test gate, --list output polish
+  commits:
+  - fb4ff92
+  - aca09b0
+  - 64be13b
+- date: 2026-04-03
+  summary: Implemented HTTP/SSE transport (HttpSession); verified against Pieces MCP; created HANDOFF.mcpipe.workspace.yaml
+  commits:
+  - d2cebb8
+  - 8ce346c
+  - 996b68a

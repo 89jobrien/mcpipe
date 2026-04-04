@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "devloop": {
+      "command": "/usr/local/bin/devloop",
+      "args": ["mcp-server"]
+    },
+    "personal-mcp": {
+      "command": "/usr/local/bin/personal-mcp",
+      "args": []
+    }
+  }
+}
