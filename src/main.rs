@@ -356,6 +356,50 @@ async fn run_scan() -> anyhow::Result<()> {
     Ok(())
 }
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// Verify that every flag listed in `global_value_flags` and `global_bool_flags`
+    /// inside `run()` matches a registered arg in `build_global_parser()`.
+    /// A mismatch means the strip loop would silently leak flags into the dynamic
+    /// subcommand parser or fail to strip flags that were removed from the parser.
+    #[test]
+    fn argv_strip_lists_match_global_parser() {
+        let global_value_flags = [
+            "--mcp-stdio", "--mcp", "--spec", "--graphql",
+            "--auth-header", "--header", "--base-url", "--cache-ttl", "--jq", "--head", "--search", "--fields",
+            "--cli", "--openapi-output",
+        ];
+        let global_bool_flags = ["--pretty", "--raw", "--refresh", "--list", "--scan", "--gen-openapi"];
+
+        let parser = build_global_parser();
+        let registered: Vec<String> = parser
+            .get_arguments()
+            .map(|a| format!("--{}", a.get_long().unwrap_or(a.get_id().as_str())))
+            .collect();
+
+        for flag in global_value_flags.iter().chain(global_bool_flags.iter()) {
+            assert!(
+                registered.contains(&flag.to_string()),
+                "strip list contains {flag} but build_global_parser has no such arg — sync the two lists"
+            );
+        }
+
+        // Every registered long arg should appear in one of the two strip lists,
+        // unless it is a positional or internal arg without a long form.
+        let all_strip: Vec<&str> = global_value_flags.iter().chain(global_bool_flags.iter()).copied().collect();
+        for arg in parser.get_arguments() {
+            let Some(long) = arg.get_long() else { continue };
+            let flag = format!("--{long}");
+            assert!(
+                all_strip.contains(&flag.as_str()),
+                "build_global_parser has {flag} but it is missing from the strip lists in run()"
+            );
+        }
+    }
+}
+
 async fn fetch_spec(url: &str, auth_headers: &[(String, String)]) -> Result<serde_json::Value> {
     use mcpipe::deser::{parse_any, FormatHint};
 

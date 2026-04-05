@@ -41,7 +41,7 @@ impl McpBackend {
             .args(&args)
             .stdin(std::process::Stdio::piped())
             .stdout(std::process::Stdio::piped())
-            .stderr(std::process::Stdio::null())
+            .stderr(std::process::Stdio::inherit())
             .spawn()
             .map_err(|e| BackendError::Transport(format!("spawn {command}: {e}")))?;
 

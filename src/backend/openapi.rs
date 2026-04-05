@@ -8,6 +8,7 @@ pub struct OpenApiBackend {
     spec: serde_json::Value,
     base_url: String,
     auth_headers: Vec<(String, String)>,
+    client: reqwest::Client,
 }
 
 impl OpenApiBackend {
@@ -23,11 +24,11 @@ impl OpenApiBackend {
         let spec = parse_any(&bytes, hint)
             .with_context(|| format!("parsing spec file {path}"))?;
         let base_url = extract_base_url(&spec);
-        Ok(Self { spec, base_url, auth_headers: vec![] })
+        Ok(Self { spec, base_url, auth_headers: vec![], client: reqwest::Client::new() })
     }
 
     pub fn from_json(spec: serde_json::Value, base_url: String, auth_headers: Vec<(String, String)>) -> Self {
-        Self { spec, base_url, auth_headers }
+        Self { spec, base_url, auth_headers, client: reqwest::Client::new() }
     }
 
     pub fn with_base_url(mut self, base_url: String) -> Self {
@@ -152,6 +153,7 @@ impl Backend for OpenApiBackend {
         let mut url_path = path_template.clone();
         let mut query_params = vec![];
         let mut body_map: serde_json::Map<String, serde_json::Value> = serde_json::Map::new();
+        let mut header_params: Vec<(String, String)> = vec![];
 
         for param in &cmd.params {
             let val = match args.get(&param.original_name) {
@@ -171,23 +173,28 @@ impl Backend for OpenApiBackend {
                 ParamLocation::Body => {
                     body_map.insert(param.original_name.clone(), val);
                 }
-                ParamLocation::Header | ParamLocation::ToolInput => {}
+                ParamLocation::Header => {
+                    header_params.push((param.original_name.clone(), val.as_str().unwrap_or(&val.to_string()).to_string()));
+                }
+                ParamLocation::ToolInput => {}
             }
         }
 
         let url = format!("{}{}", self.base_url.trim_end_matches('/'), url_path);
 
-        let client = reqwest::Client::new();
         let mut req = match method.as_str() {
-            "get"    => client.get(&url),
-            "post"   => client.post(&url),
-            "put"    => client.put(&url),
-            "patch"  => client.patch(&url),
-            "delete" => client.delete(&url),
-            _        => client.get(&url),
+            "get"    => self.client.get(&url),
+            "post"   => self.client.post(&url),
+            "put"    => self.client.put(&url),
+            "patch"  => self.client.patch(&url),
+            "delete" => self.client.delete(&url),
+            _        => self.client.get(&url),
         };
 
         for (k, v) in &self.auth_headers {
+            req = req.header(k, v);
+        }
+        for (k, v) in &header_params {
             req = req.header(k, v);
         }
 
