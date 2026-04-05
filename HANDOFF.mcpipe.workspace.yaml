@@ -1,6 +1,6 @@
 project: mcpipe
 id: mcpipe
-updated: 2026-04-04
+updated: 2026-04-05
 items:
 - id: mcpipe-6
   doob_uuid: a8aefce8-b10e-4960-bac3-137e6ad10f5d
@@ -119,6 +119,7 @@ items:
     type: human-edit
     field: status
     value: done
+    reviewed: 2026-04-05
     note: PR #1 merged via gh pr merge. doob sync keeps reverting to open.
   completed: 2026-04-04
 - id: mcpipe-15
@@ -145,8 +146,8 @@ items:
     type: human-edit
     field: status
     value: done
+    reviewed: 2026-04-05
     note: OpenAPI spec generated and doob.baml committed. doob sync keeps reverting to open.
-  completed: 2026-04-04
   completed: 2026-04-04
 - id: mcpipe-8
   doob_uuid: bd582b04-47c9-4b5c-b9e4-8ce38661312f
@@ -211,6 +212,10 @@ items:
     type: note
     note: Superseded by conductor task 2tgau6uz7crk3laphvol.
 log:
+- date: 2026-04-05
+  summary: Exercised --scan. Fixed basename dedup, added skip dirs (baml_client/vendor/etc), moved errors to stderr, truncated multi-line descriptions. All tests passing.
+  commits:
+  - 20d7254
 - date: 2026-04-04
   summary: Generated doob.openapi.yaml (16 endpoints), wrote doob.baml in devloop (6 functions, haiku). Merged both PRs. All open items done — only P3 parked items remain.
   commits:
