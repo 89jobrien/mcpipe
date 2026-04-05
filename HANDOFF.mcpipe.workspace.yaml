@@ -153,8 +153,9 @@ items:
   doob_uuid: bd582b04-47c9-4b5c-b9e4-8ce38661312f
   name: argv-strip-round-trip-test
   priority: P3
-  status: parked
+  status: done
   title: Add round-trip test for global-flag argv stripping
+  completed: 2026-04-05
   description: |
     Manual argv stripping in main.rs must be kept in sync with build_global_parser by
     hand. A mismatch silently passes unknown flags into the dynamic subcommand parser.
@@ -171,8 +172,9 @@ items:
   doob_uuid: cf4c35f5-1806-4dcb-b260-e26f47836439
   name: reqwest-client-per-call
   priority: P3
-  status: parked
+  status: done
   title: Build reqwest::Client once in OpenApiBackend, not per execute call
+  completed: 2026-04-05
   description: |
     reqwest::Client::new() on every execute call allocates a new connection pool.
   files:
@@ -185,8 +187,9 @@ items:
   doob_uuid: 6bdc3a43-becb-47be-8e7c-a25421b609d3
   name: header-param-injection
   priority: P3
-  status: parked
+  status: done
   title: Inject ParamLocation::Header params into outgoing OpenAPI requests
+  completed: 2026-04-05
   description: |
     ParamLocation::Header params are parsed from the spec but never injected into
     outgoing requests.
@@ -200,8 +203,9 @@ items:
   doob_uuid: ea49882b-0887-48ce-adf3-1f05980ac2af
   name: stdio-child-stderr-forwarding
   priority: P3
-  status: parked
+  status: done
   title: Forward stdio MCP child stderr instead of discarding via Stdio::null()
+  completed: 2026-04-05
   description: |
     Child stderr is discarded via Stdio::null(). Stdio server diagnostics are invisible
     on crash.
@@ -212,6 +216,10 @@ items:
     type: note
     note: Superseded by conductor task 2tgau6uz7crk3laphvol.
 log:
+- date: 2026-04-05
+  summary: Resolved all 4 P3 parked items. reqwest::Client reuse in OpenApiBackend, header param injection, stdio child stderr forwarding, argv-strip round-trip test. 37 tests passing.
+  commits:
+  - 47cdcc2
 - date: 2026-04-05
   summary: Exercised --scan. Fixed basename dedup, added skip dirs (baml_client/vendor/etc), moved errors to stderr, truncated multi-line descriptions. All tests passing.
   commits:
