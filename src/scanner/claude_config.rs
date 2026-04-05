@@ -75,7 +75,17 @@ impl ClaudeConfigScanner {
             format!("{} {}", cmd, args.join(" "))
         };
 
-        let dedup_key = format!("stdio:{command_str}");
+        // Dedup by (binary_basename, args) so that "/usr/bin/foo bar" and "foo bar"
+        // are treated as the same server regardless of absolute vs relative path.
+        let binary_basename = std::path::Path::new(cmd)
+            .file_name()
+            .and_then(|n| n.to_str())
+            .unwrap_or(cmd);
+        let dedup_key = if args.is_empty() {
+            format!("stdio:{binary_basename}")
+        } else {
+            format!("stdio:{binary_basename} {}", args.join(" "))
+        };
         if !seen.insert(dedup_key) {
             return None;
         }

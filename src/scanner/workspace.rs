@@ -3,7 +3,10 @@ use std::path::Path;
 
 use crate::discovery::{BackendKind, DiscoveredSource, SourceScanner};
 
-const SKIP_DIRS: &[&str] = &["target", "node_modules", ".git", ".cache", "dist", "build"];
+const SKIP_DIRS: &[&str] = &[
+    "target", "node_modules", ".git", ".cache", "dist", "build",
+    "baml_client", "vendor", "generated", "gen", ".venv", "venv",
+];
 const OPENAPI_FILENAMES: &[&str] = &[
     "openapi.yaml", "openapi.yml", "openapi.json",
     "swagger.yaml", "swagger.yml", "swagger.json",

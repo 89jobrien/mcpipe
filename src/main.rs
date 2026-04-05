@@ -324,27 +324,35 @@ async fn run_scan() -> anyhow::Result<()> {
     let results = futures::future::join_all(discover_futures).await;
 
     let mut total = 0usize;
+    let mut errors = 0usize;
     for (name, origin, result) in &results {
         match result {
             Ok(Ok(cmds)) => {
                 println!("## {} ({})", name, origin);
                 let max_w = cmds.iter().map(|c| c.name.len()).max().unwrap_or(10).max(10);
                 for cmd in cmds {
-                    println!("  {:<width$}  {}", cmd.name, cmd.description, width = max_w);
+                    // Take only the first line of multi-line descriptions and cap at 80 chars.
+                    let desc = cmd.description.lines().next().unwrap_or("").trim();
+                    let desc = if desc.len() > 80 { &desc[..80] } else { desc };
+                    println!("  {:<width$}  {}", cmd.name, desc, width = max_w);
                 }
                 println!("  ({} tools)\n", cmds.len());
                 total += cmds.len();
             }
             Ok(Err(e)) => {
-                println!("## {} — ERROR: {}\n", name, e);
+                eprintln!("  [skip] {} — {}", name, e);
+                errors += 1;
             }
             Err(_) => {
-                println!("## {} — TIMEOUT (>10s)\n", name);
+                eprintln!("  [skip] {} — timeout (>10s)", name);
+                errors += 1;
             }
         }
     }
 
-    println!("Total: {} tools across {} sources.", total, results.len());
+    let src_ok = results.len() - errors;
+    println!("Total: {} tools across {} source(s){}.", total, src_ok,
+        if errors > 0 { format!(" ({errors} skipped — see stderr)") } else { String::new() });
     Ok(())
 }
 

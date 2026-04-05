@@ -65,6 +65,8 @@ async fn deduplicates_same_command() {
         vec![mcp_path.to_string()],
     );
     let sources = scanner.scan().await;
-    // settings has devloop + personal-mcp; project has devloop-pipeline (different command)
-    assert_eq!(sources.len(), 3);
+    // settings: devloop (/usr/local/bin/devloop mcp-server) + personal-mcp
+    // project: devloop-pipeline (devloop mcp-server) — same basename+args, deduplicated
+    // result: 2 (devloop deduped, personal-mcp survives)
+    assert_eq!(sources.len(), 2);
 }
