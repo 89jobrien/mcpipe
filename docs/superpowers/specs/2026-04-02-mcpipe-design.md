@@ -197,17 +197,20 @@ eventsource-client = "0.12"
 ## Testing Strategy
 
 **Unit tests** (inline `#[cfg(test)]` modules):
+
 - `CommandDef` building from schema fixtures
 - CLI flag generation from `CommandDef` list
 - `format.rs` output transformations
 - `cache.rs` TTL expiry against tmp dir
 
 **Adapter tests** (`tests/`):
+
 - `McpBackend`: spawn minimal MCP echo server as child process, assert `discover()` + `execute()` roundtrip
 - `OpenApiBackend`: load petstore-style fixture JSON, assert `CommandDef` output
 - `GraphQlBackend`: fixture introspection response, assert command generation
 
 **Integration tests** (behind `--features integration`, not run in CI by default):
+
 - Point at a live MCP server, run discovery + execute cycle
 
 Test doubles are plain structs implementing `Backend` — no mocking frameworks.

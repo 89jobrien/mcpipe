@@ -12,31 +12,32 @@
 
 ## File Map
 
-| File | Responsibility |
-|------|---------------|
-| `Cargo.toml` | workspace manifest, all deps |
-| `src/main.rs` | composition root: parse global flags, build `Box<dyn Backend>`, orchestrate discover → cli → execute → format |
-| `src/domain.rs` | `CommandDef`, `ParamDef`, `ParamLocation`, `ArgMap`, `BackendError` — zero external deps (except serde_json) |
-| `src/backend/mod.rs` | `Backend` async trait |
-| `src/backend/mcp.rs` | `McpBackend` — stdio and HTTP/SSE transports |
-| `src/backend/openapi.rs` | `OpenApiBackend` — spec fetch, `$ref` resolve, operation → `CommandDef` |
-| `src/backend/graphql.rs` | `GraphQlBackend` — introspection → `CommandDef`, execute mutation/query |
-| `src/cli.rs` | `build_command()` — walk `Vec<CommandDef>`, return `clap::Command` tree; `extract_args()` — matched args → `ArgMap` |
-| `src/cache.rs` | `Cache` struct — load/save `Vec<CommandDef>` with TTL, SHA-256 key |
-| `src/format.rs` | `output()` — pretty/raw/jq/head formatting of `serde_json::Value` |
-| `src/secret.rs` | `resolve_secret()` — `env:` / `file:` / literal |
-| `tests/openapi_adapter.rs` | fixture-based adapter tests for `OpenApiBackend` |
-| `tests/graphql_adapter.rs` | fixture-based adapter tests for `GraphQlBackend` |
-| `tests/mcp_adapter.rs` | process-spawn adapter tests for `McpBackend` stdio |
-| `tests/fixtures/petstore.json` | petstore-style OpenAPI fixture |
-| `tests/fixtures/introspection.json` | GraphQL introspection fixture |
-| `tests/fixtures/mcp_echo.py` | minimal MCP stdio echo server (Python, used as test subprocess) |
+| File                                | Responsibility                                                                                                      |
+| ----------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| `Cargo.toml`                        | workspace manifest, all deps                                                                                        |
+| `src/main.rs`                       | composition root: parse global flags, build `Box<dyn Backend>`, orchestrate discover → cli → execute → format       |
+| `src/domain.rs`                     | `CommandDef`, `ParamDef`, `ParamLocation`, `ArgMap`, `BackendError` — zero external deps (except serde_json)        |
+| `src/backend/mod.rs`                | `Backend` async trait                                                                                               |
+| `src/backend/mcp.rs`                | `McpBackend` — stdio and HTTP/SSE transports                                                                        |
+| `src/backend/openapi.rs`            | `OpenApiBackend` — spec fetch, `$ref` resolve, operation → `CommandDef`                                             |
+| `src/backend/graphql.rs`            | `GraphQlBackend` — introspection → `CommandDef`, execute mutation/query                                             |
+| `src/cli.rs`                        | `build_command()` — walk `Vec<CommandDef>`, return `clap::Command` tree; `extract_args()` — matched args → `ArgMap` |
+| `src/cache.rs`                      | `Cache` struct — load/save `Vec<CommandDef>` with TTL, SHA-256 key                                                  |
+| `src/format.rs`                     | `output()` — pretty/raw/jq/head formatting of `serde_json::Value`                                                   |
+| `src/secret.rs`                     | `resolve_secret()` — `env:` / `file:` / literal                                                                     |
+| `tests/openapi_adapter.rs`          | fixture-based adapter tests for `OpenApiBackend`                                                                    |
+| `tests/graphql_adapter.rs`          | fixture-based adapter tests for `GraphQlBackend`                                                                    |
+| `tests/mcp_adapter.rs`              | process-spawn adapter tests for `McpBackend` stdio                                                                  |
+| `tests/fixtures/petstore.json`      | petstore-style OpenAPI fixture                                                                                      |
+| `tests/fixtures/introspection.json` | GraphQL introspection fixture                                                                                       |
+| `tests/fixtures/mcp_echo.py`        | minimal MCP stdio echo server (Python, used as test subprocess)                                                     |
 
 ---
 
 ## Task 1: Scaffold project
 
 **Files:**
+
 - Create: `Cargo.toml`
 - Create: `src/main.rs`
 
@@ -101,6 +102,7 @@ git commit -m "chore: scaffold mcpipe cargo project"
 ## Task 2: Domain types
 
 **Files:**
+
 - Create: `src/domain.rs`
 - Modify: `src/main.rs` (add `mod domain;`)
 
@@ -185,11 +187,13 @@ mod tests {
 - [ ] **Step 2: Add `thiserror` dep and `mod domain;` to main**
 
 Add to `Cargo.toml` `[dependencies]`:
+
 ```toml
 thiserror = "1"
 ```
 
 Add to `src/main.rs`:
+
 ```rust
 mod domain;
 
@@ -217,6 +221,7 @@ git commit -m "feat: add domain types (CommandDef, ParamDef, BackendError)"
 ## Task 3: Backend trait
 
 **Files:**
+
 - Create: `src/backend/mod.rs`
 - Modify: `src/main.rs` (add `mod backend;`)
 
@@ -246,21 +251,25 @@ pub trait Backend: Send + Sync {
 Create empty stub files so it compiles:
 
 `src/backend/mcp.rs`:
+
 ```rust
 // MCP backend — stdio and HTTP/SSE
 ```
 
 `src/backend/openapi.rs`:
+
 ```rust
 // OpenAPI backend
 ```
 
 `src/backend/graphql.rs`:
+
 ```rust
 // GraphQL backend
 ```
 
 Add to `src/main.rs`:
+
 ```rust
 mod domain;
 mod backend;
@@ -289,6 +298,7 @@ git commit -m "feat: add Backend trait (port)"
 ## Task 4: Secret resolution
 
 **Files:**
+
 - Create: `src/secret.rs`
 - Modify: `src/main.rs` (add `mod secret;`)
 
@@ -370,6 +380,7 @@ fn file_prefix() {
 ```
 
 Add to `src/main.rs`:
+
 ```rust
 mod domain;
 mod backend;
@@ -399,6 +410,7 @@ git commit -m "feat: add secret resolution (env:/file:/literal)"
 ## Task 5: Output formatting
 
 **Files:**
+
 - Create: `src/format.rs`
 - Modify: `src/main.rs` (add `mod format;`)
 
@@ -516,6 +528,7 @@ mod tests {
 ```
 
 Add to `src/main.rs`:
+
 ```rust
 mod domain;
 mod backend;
@@ -546,6 +559,7 @@ git commit -m "feat: add output formatting (pretty/raw/head/jq)"
 ## Task 6: Disk cache
 
 **Files:**
+
 - Create: `src/cache.rs`
 - Modify: `src/main.rs` (add `mod cache;`)
 
@@ -665,6 +679,7 @@ dirs = "5"
 ```
 
 Add to `src/main.rs`:
+
 ```rust
 mod domain;
 mod backend;
@@ -696,6 +711,7 @@ git commit -m "feat: add TTL disk cache for discovered CommandDefs"
 ## Task 7: Dynamic CLI builder
 
 **Files:**
+
 - Create: `src/cli.rs`
 - Modify: `src/main.rs` (add `mod cli;`)
 
@@ -864,6 +880,7 @@ mod tests {
 ```
 
 Add to `src/main.rs`:
+
 ```rust
 mod domain;
 mod backend;
@@ -896,6 +913,7 @@ git commit -m "feat: dynamic clap CLI builder from CommandDef list"
 ## Task 8: OpenAPI backend
 
 **Files:**
+
 - Modify: `src/backend/openapi.rs`
 - Create: `tests/fixtures/petstore.json`
 - Create: `tests/openapi_adapter.rs`
@@ -935,7 +953,7 @@ Create `tests/fixtures/petstore.json`:
                 "required": ["name"],
                 "properties": {
                   "name": { "type": "string", "description": "Pet name" },
-                  "tag":  { "type": "string", "description": "Pet tag"  }
+                  "tag": { "type": "string", "description": "Pet tag" }
                 }
               }
             }
@@ -1345,6 +1363,7 @@ git commit -m "feat: OpenApiBackend — spec load, \$ref resolve, CommandDef gen
 ## Task 9: GraphQL backend
 
 **Files:**
+
 - Modify: `src/backend/graphql.rs`
 - Create: `tests/fixtures/introspection.json`
 - Create: `tests/graphql_adapter.rs`
@@ -1374,7 +1393,11 @@ Create `tests/fixtures/introspection.json`:
                   "defaultValue": null
                 }
               ],
-              "type": { "kind": "LIST", "name": null, "ofType": { "kind": "OBJECT", "name": "Pet" } }
+              "type": {
+                "kind": "LIST",
+                "name": null,
+                "ofType": { "kind": "OBJECT", "name": "Pet" }
+              }
             }
           ]
         },
@@ -1388,7 +1411,11 @@ Create `tests/fixtures/introspection.json`:
                 {
                   "name": "name",
                   "description": "Pet name",
-                  "type": { "kind": "NON_NULL", "name": null, "ofType": { "kind": "SCALAR", "name": "String" } },
+                  "type": {
+                    "kind": "NON_NULL",
+                    "name": null,
+                    "ofType": { "kind": "SCALAR", "name": "String" }
+                  },
                   "defaultValue": null
                 }
               ],
@@ -1399,8 +1426,18 @@ Create `tests/fixtures/introspection.json`:
         {
           "name": "Pet",
           "fields": [
-            { "name": "id",   "description": "", "args": [], "type": { "kind": "SCALAR", "name": "String" } },
-            { "name": "name", "description": "", "args": [], "type": { "kind": "SCALAR", "name": "String" } }
+            {
+              "name": "id",
+              "description": "",
+              "args": [],
+              "type": { "kind": "SCALAR", "name": "String" }
+            },
+            {
+              "name": "name",
+              "description": "",
+              "args": [],
+              "type": { "kind": "SCALAR", "name": "String" }
+            }
           ]
         }
       ]
@@ -1676,6 +1713,7 @@ git commit -m "feat: GraphQlBackend — introspection discovery, CommandDef gene
 ## Task 10: MCP backend (stdio)
 
 **Files:**
+
 - Modify: `src/backend/mcp.rs`
 - Create: `tests/fixtures/mcp_echo.py`
 - Create: `tests/mcp_adapter.rs`
@@ -2061,6 +2099,7 @@ git commit -m "feat: McpBackend stdio — JSON-RPC session, discover, execute"
 ## Task 11: Wire main.rs
 
 **Files:**
+
 - Modify: `src/main.rs`
 
 - [ ] **Step 1: Write the full main.rs**
@@ -2278,6 +2317,7 @@ cd /Users/joe/dev/mcpipe
 ```
 
 Expected output (order may vary):
+
 ```
 list-pets                       List all pets
 create-pet                      Create a pet
@@ -2332,6 +2372,7 @@ cd /Users/joe/dev/mcpipe
 ```
 
 Expected:
+
 ```
 echo                            Echo the input back
 ```
@@ -2355,21 +2396,21 @@ git commit -m "chore: all tests passing, clippy clean"
 
 **Spec coverage check:**
 
-| Spec requirement | Task |
-|---|---|
-| Single binary, no runtime deps | Task 1, 12 |
-| MCP stdio transport | Task 10 |
-| MCP HTTP/SSE transport | Task 10 (stub — marked not yet implemented) |
-| OpenAPI backend | Task 8 |
-| GraphQL backend | Task 9 |
-| Dynamic CLI generation | Task 7 |
-| TTL disk cache | Task 6 |
-| `--pretty`, `--raw`, `--head`, `--jq` | Task 5 |
-| `--list`, `--search` | Task 11 |
-| `env:`/`file:` secret resolution | Task 4 |
-| Error → stderr + exit 1 | Task 11 |
-| `--refresh` flag | Task 11 |
-| `--fields` GraphQL override | Task 9, 11 |
+| Spec requirement                      | Task                                        |
+| ------------------------------------- | ------------------------------------------- |
+| Single binary, no runtime deps        | Task 1, 12                                  |
+| MCP stdio transport                   | Task 10                                     |
+| MCP HTTP/SSE transport                | Task 10 (stub — marked not yet implemented) |
+| OpenAPI backend                       | Task 8                                      |
+| GraphQL backend                       | Task 9                                      |
+| Dynamic CLI generation                | Task 7                                      |
+| TTL disk cache                        | Task 6                                      |
+| `--pretty`, `--raw`, `--head`, `--jq` | Task 5                                      |
+| `--list`, `--search`                  | Task 11                                     |
+| `env:`/`file:` secret resolution      | Task 4                                      |
+| Error → stderr + exit 1               | Task 11                                     |
+| `--refresh` flag                      | Task 11                                     |
+| `--fields` GraphQL override           | Task 9, 11                                  |
 
 **MCP HTTP/SSE gap:** The spec says MCP HTTP/SSE is in scope. Task 10 stubs it with a `Transport` error. After the core plan is complete, MCP HTTP can be added as a follow-up task using `reqwest` SSE streaming — it follows the same `StdioSession` shape but over HTTP.
 
