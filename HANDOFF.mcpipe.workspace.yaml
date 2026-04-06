@@ -2,6 +2,39 @@ project: mcpipe
 id: mcpipe
 updated: 2026-04-06
 items:
+- id: mcpipe-17
+  name: circular-ref-infinite-loop
+  priority: P1
+  status: open
+  title: resolve_refs can infinite-loop on circular $ref chains in OpenAPI specs
+  description: |
+    resolve_refs in openapi.rs has no cycle detection. A spec with a circular $ref
+    causes a stack overflow. Add a seen-set or depth cap before recursing.
+  files:
+  - src/backend/openapi.rs
+  extra: []
+- id: mcpipe-18
+  name: stdio-session-hang
+  priority: P1
+  status: open
+  title: StdioSession::send_request has no timeout — hangs forever if MCP server stalls
+  description: |
+    send_request awaits indefinitely. Add a configurable timeout (default 30s) with
+    a descriptive error on expiry.
+  files:
+  - src/backend/mcp.rs
+  extra: []
+- id: mcpipe-19
+  name: openapi-file-panic
+  priority: P1
+  status: open
+  title: OpenApiFile backend panics on load failure inside into_backend()
+  description: |
+    discovery.rs calls .expect() on the OpenAPI parse result inside into_backend().
+    Replace with proper error propagation so --scan doesn't panic on a bad spec.
+  files:
+  - src/discovery.rs
+  extra: []
 - id: mcpipe-6
   doob_uuid: a8aefce8-b10e-4960-bac3-137e6ad10f5d
   name: auth-headers-field-rename
@@ -229,6 +262,10 @@ items:
   extra: []
   completed: 2026-04-06
 log:
+- date: 2026-04-06
+  summary: devkit council sweep — 10 issues filed (#2-#11). Critical: circular $ref infinite
+    loop, StdioSession hang, OpenApiFile panic. Added mcpipe-17/18/19 to HANDOFF.
+  commits: []
 - date: 2026-04-06
   summary: Auto-write openapi output to ~/.ctx/mcpipe/schemas/openapi/{name}.{ts}.openapi.yaml
     when --openapi-output omitted. Removed stale doob.openapi.yaml from repo.
