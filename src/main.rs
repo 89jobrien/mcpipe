@@ -129,13 +129,25 @@ async fn run() -> Result<()> {
         let doc = mcpipe::openapi_gen::generate(tool_name, "0.1.0", &commands);
         let yaml = mcpipe::openapi_gen::to_yaml(&doc)
             .context("serializing OpenAPI spec to YAML")?;
-        if let Some(path) = openapi_output {
-            std::fs::write(&path, &yaml)
-                .with_context(|| format!("writing OpenAPI spec to {path}"))?;
-            eprintln!("Wrote OpenAPI spec to {path}");
+        let resolved_path = if let Some(path) = openapi_output {
+            path
         } else {
-            print!("{yaml}");
-        }
+            let ts = std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap_or_default()
+                .as_secs();
+            let home = std::env::var("HOME").context("HOME not set")?;
+            let dir = std::path::PathBuf::from(home)
+                .join(".ctx/mcpipe/schemas/openapi");
+            std::fs::create_dir_all(&dir)
+                .with_context(|| format!("creating {}", dir.display()))?;
+            dir.join(format!("{tool_name}.{ts}.openapi.yaml"))
+                .to_string_lossy()
+                .into_owned()
+        };
+        std::fs::write(&resolved_path, &yaml)
+            .with_context(|| format!("writing OpenAPI spec to {resolved_path}"))?;
+        eprintln!("Wrote OpenAPI spec to {resolved_path}");
         return Ok(());
     }
 

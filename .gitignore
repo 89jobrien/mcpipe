@@ -2,3 +2,5 @@
 .remember/logs/autonomous
 .worktrees/
 .ctx/
+.remember/tmp/*
+*.openapi.yaml
