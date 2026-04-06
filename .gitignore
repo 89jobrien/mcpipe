@@ -3,4 +3,5 @@
 .worktrees/
 .ctx/
 .remember/tmp/*
-*.openapi.yaml
+# Generated OpenAPI snapshots at repo root (use --openapi-output for intentional files)
+/*.openapi.yaml
