@@ -293,6 +293,13 @@ fn build_global_parser() -> Command {
         .allow_external_subcommands(true)
 }
 
+async fn openapi_output_dir() -> anyhow::Result<std::path::PathBuf> {
+    let home = std::env::var("HOME").context("HOME not set")?;
+    let dir = std::path::PathBuf::from(home).join(".ctx/mcpipe/schemas/openapi");
+    std::fs::create_dir_all(&dir).with_context(|| format!("creating {}", dir.display()))?;
+    Ok(dir)
+}
+
 async fn run_scan() -> anyhow::Result<()> {
     use mcpipe::scanner::claude_config::ClaudeConfigScanner;
     use mcpipe::scanner::workspace::WorkspaceScanner;
@@ -320,6 +327,11 @@ async fn run_scan() -> anyhow::Result<()> {
 
     eprintln!("Found {} source(s). Discovering tools...\n", all_sources.len());
 
+    let ts = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .unwrap_or_default()
+        .as_secs();
+
     let discover_futures: Vec<_> = all_sources.iter().map(|src| {
         let backend = src.clone().into_backend();
         let name = src.name.clone();
@@ -334,6 +346,8 @@ async fn run_scan() -> anyhow::Result<()> {
     }).collect();
 
     let results = futures::future::join_all(discover_futures).await;
+
+    let out_dir = openapi_output_dir().await.ok();
 
     let mut total = 0usize;
     let mut errors = 0usize;
@@ -350,6 +364,20 @@ async fn run_scan() -> anyhow::Result<()> {
                 }
                 println!("  ({} tools)\n", cmds.len());
                 total += cmds.len();
+
+                // Generate OpenAPI spec for this source
+                if let Some(ref dir) = out_dir {
+                    let slug = name.replace(|c: char| !c.is_alphanumeric() && c != '-', "-");
+                    let path = dir.join(format!("{slug}.{ts}.openapi.yaml"));
+                    let doc = mcpipe::openapi_gen::generate(name, "0.1.0", cmds);
+                    match mcpipe::openapi_gen::to_yaml(&doc) {
+                        Ok(yaml) => match std::fs::write(&path, &yaml) {
+                            Ok(()) => eprintln!("  -> {}", path.display()),
+                            Err(e) => eprintln!("  [warn] failed to write spec for {name}: {e}"),
+                        },
+                        Err(e) => eprintln!("  [warn] failed to serialize spec for {name}: {e}"),
+                    }
+                }
             }
             Ok(Err(e)) => {
                 eprintln!("  [skip] {} — {}", name, e);
