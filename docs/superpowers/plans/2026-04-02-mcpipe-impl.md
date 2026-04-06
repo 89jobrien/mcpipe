@@ -2415,3 +2415,4 @@ git commit -m "chore: all tests passing, clippy clean"
 **MCP HTTP/SSE gap:** The spec says MCP HTTP/SSE is in scope. Task 10 stubs it with a `Transport` error. After the core plan is complete, MCP HTTP can be added as a follow-up task using `reqwest` SSE streaming — it follows the same `StdioSession` shape but over HTTP.
 
 **Type consistency confirmed:** `CommandDef`, `ParamDef`, `ParamLocation`, `ArgMap`, `BackendError`, `FormatOptions` defined in Task 2/5 and used consistently across Tasks 7–11. `to_kebab` defined in `openapi.rs` and imported by `mcp.rs` and `graphql.rs`.
+test: Mon Apr  6 04:29:36 EDT 2026
