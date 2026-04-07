@@ -3,8 +3,8 @@ pub mod graphql;
 pub mod mcp;
 pub mod openapi;
 
-use async_trait::async_trait;
 use crate::domain::{ArgMap, BackendError, CommandDef};
+use async_trait::async_trait;
 
 #[async_trait]
 pub trait Backend: Send + Sync {

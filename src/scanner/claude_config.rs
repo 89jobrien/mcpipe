@@ -11,7 +11,10 @@ pub struct ClaudeConfigScanner {
 
 impl ClaudeConfigScanner {
     pub fn from_paths(settings_paths: Vec<String>, mcp_paths: Vec<String>) -> Self {
-        Self { settings_paths, mcp_paths }
+        Self {
+            settings_paths,
+            mcp_paths,
+        }
     }
 
     pub fn default_env() -> Self {
@@ -58,7 +61,9 @@ impl ClaudeConfigScanner {
             }
             return Some(DiscoveredSource {
                 name: name.to_string(),
-                kind: BackendKind::McpHttp { url: url.to_string() },
+                kind: BackendKind::McpHttp {
+                    url: url.to_string(),
+                },
                 origin: origin.to_string(),
             });
         }
@@ -67,7 +72,12 @@ impl ClaudeConfigScanner {
         let args: Vec<String> = entry
             .get("args")
             .and_then(|a| a.as_array())
-            .map(|arr| arr.iter().filter_map(|v| v.as_str()).map(String::from).collect())
+            .map(|arr| {
+                arr.iter()
+                    .filter_map(|v| v.as_str())
+                    .map(String::from)
+                    .collect()
+            })
             .unwrap_or_default();
         let command_str = if args.is_empty() {
             cmd.to_string()
@@ -92,27 +102,36 @@ impl ClaudeConfigScanner {
 
         Some(DiscoveredSource {
             name: name.to_string(),
-            kind: BackendKind::McpStdio { command: command_str },
+            kind: BackendKind::McpStdio {
+                command: command_str,
+            },
             origin: origin.to_string(),
         })
     }
 
     fn parse_file(path: &str, seen: &mut HashSet<String>) -> Vec<DiscoveredSource> {
-        let Ok(text) = std::fs::read_to_string(path) else { return vec![] };
+        let Ok(text) = std::fs::read_to_string(path) else {
+            return vec![];
+        };
         let Ok(json): Result<serde_json::Value, _> = serde_json::from_str(&text) else {
             return vec![];
         };
 
-        let servers = json.get("mcpServers")
+        let servers = json
+            .get("mcpServers")
             .and_then(|v| v.as_object())
             .or_else(|| json.as_object());
 
-        let Some(servers) = servers else { return vec![] };
+        let Some(servers) = servers else {
+            return vec![];
+        };
 
         servers
             .iter()
             .filter_map(|(name, entry)| {
-                if !entry.is_object() { return None; }
+                if !entry.is_object() {
+                    return None;
+                }
                 Self::parse_server_entry(name, entry, path, seen)
             })
             .collect()

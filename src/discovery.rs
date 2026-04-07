@@ -55,7 +55,9 @@ mod tests {
     fn cli_backend_kind_into_backend() {
         let source = DiscoveredSource {
             name: "doob".to_string(),
-            kind: BackendKind::Cli { command: "doob".to_string() },
+            kind: BackendKind::Cli {
+                command: "doob".to_string(),
+            },
             origin: "manual".to_string(),
         };
         let _backend = source.into_backend();

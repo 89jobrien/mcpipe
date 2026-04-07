@@ -1,4 +1,4 @@
-use anyhow::{bail, Result};
+use anyhow::{Result, bail};
 use std::process::{Command, Stdio};
 
 pub struct FormatOptions {
@@ -51,7 +51,9 @@ fn run_jq(json: &str, expr: &str) -> Result<String> {
         .map_err(|e| anyhow::anyhow!("jq not found: {e}"))?;
 
     use std::io::Write;
-    child.stdin.as_mut()
+    child
+        .stdin
+        .as_mut()
         .ok_or_else(|| anyhow::anyhow!("jq stdin not available"))?
         .write_all(json.as_bytes())?;
     let out = child.wait_with_output()?;
@@ -67,7 +69,12 @@ mod tests {
     use serde_json::json;
 
     fn opts() -> FormatOptions {
-        FormatOptions { pretty: false, raw: false, jq: None, head: None }
+        FormatOptions {
+            pretty: false,
+            raw: false,
+            jq: None,
+            head: None,
+        }
     }
 
     #[test]
@@ -80,21 +87,42 @@ mod tests {
     #[test]
     fn pretty_flag() {
         let v = json!({"a": 1});
-        let out = format_value(&v, &FormatOptions { pretty: true, ..opts() }).unwrap();
+        let out = format_value(
+            &v,
+            &FormatOptions {
+                pretty: true,
+                ..opts()
+            },
+        )
+        .unwrap();
         assert!(out.contains('\n'));
     }
 
     #[test]
     fn raw_string() {
         let v = json!("hello");
-        let out = format_value(&v, &FormatOptions { raw: true, ..opts() }).unwrap();
+        let out = format_value(
+            &v,
+            &FormatOptions {
+                raw: true,
+                ..opts()
+            },
+        )
+        .unwrap();
         assert_eq!(out, "hello");
     }
 
     #[test]
     fn head_truncates_array() {
         let v = json!([1, 2, 3, 4, 5]);
-        let out = format_value(&v, &FormatOptions { head: Some(3), ..opts() }).unwrap();
+        let out = format_value(
+            &v,
+            &FormatOptions {
+                head: Some(3),
+                ..opts()
+            },
+        )
+        .unwrap();
         let back: serde_json::Value = serde_json::from_str(&out).unwrap();
         assert_eq!(back, json!([1, 2, 3]));
     }
@@ -102,7 +130,14 @@ mod tests {
     #[test]
     fn head_noop_on_object() {
         let v = json!({"a": 1});
-        let out = format_value(&v, &FormatOptions { head: Some(1), ..opts() }).unwrap();
+        let out = format_value(
+            &v,
+            &FormatOptions {
+                head: Some(1),
+                ..opts()
+            },
+        )
+        .unwrap();
         assert_eq!(serde_json::from_str::<serde_json::Value>(&out).unwrap(), v);
     }
 }

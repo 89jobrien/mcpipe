@@ -1,20 +1,24 @@
-use mcpipe::scanner::workspace::WorkspaceScanner;
 use mcpipe::discovery::{BackendKind, SourceScanner};
-use tempfile::TempDir;
+use mcpipe::scanner::workspace::WorkspaceScanner;
 use std::fs;
+use tempfile::TempDir;
 
 #[tokio::test]
 async fn finds_openapi_yaml_in_workspace() {
     let dir = TempDir::new().unwrap();
     let repo = dir.path().join("myrepo");
     fs::create_dir_all(&repo).unwrap();
-    fs::write(repo.join("openapi.yaml"), r#"
+    fs::write(
+        repo.join("openapi.yaml"),
+        r#"
 openapi: "3.0.0"
 info:
   title: Test API
   version: "1.0"
 paths: {}
-"#).unwrap();
+"#,
+    )
+    .unwrap();
 
     let scanner = WorkspaceScanner::from_roots(vec![dir.path().to_string_lossy().to_string()]);
     let sources = scanner.scan().await;
@@ -41,11 +45,19 @@ async fn skips_target_and_node_modules() {
     let dir = TempDir::new().unwrap();
     let target = dir.path().join("myrepo/target/debug");
     fs::create_dir_all(&target).unwrap();
-    fs::write(target.join("openapi.yaml"), "openapi: \"3.0.0\"\npaths: {}\n").unwrap();
+    fs::write(
+        target.join("openapi.yaml"),
+        "openapi: \"3.0.0\"\npaths: {}\n",
+    )
+    .unwrap();
 
     let node = dir.path().join("myrepo/node_modules/pkg");
     fs::create_dir_all(&node).unwrap();
-    fs::write(node.join("openapi.json"), r#"{"openapi":"3.0.0","paths":{}}"#).unwrap();
+    fs::write(
+        node.join("openapi.json"),
+        r#"{"openapi":"3.0.0","paths":{}}"#,
+    )
+    .unwrap();
 
     let scanner = WorkspaceScanner::from_roots(vec![dir.path().to_string_lossy().to_string()]);
     let sources = scanner.scan().await;

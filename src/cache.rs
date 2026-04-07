@@ -47,8 +47,7 @@ impl Cache {
     }
 
     pub fn save(&self, source: &str, cmds: &[CommandDef]) -> Result<()> {
-        std::fs::create_dir_all(&self.dir)
-            .context("creating cache dir")?;
+        std::fs::create_dir_all(&self.dir).context("creating cache dir")?;
         let path = self.path(source);
         let data = serde_json::to_string(cmds)?;
         std::fs::write(&path, data).context("writing cache file")?;

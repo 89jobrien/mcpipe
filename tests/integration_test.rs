@@ -5,8 +5,8 @@
 //! These tests are excluded from the normal `cargo test` run so they don't
 //! block CI without the necessary external fixtures or environment.
 
-use mcpipe::backend::openapi::OpenApiBackend;
 use mcpipe::backend::Backend;
+use mcpipe::backend::openapi::OpenApiBackend;
 use mcpipe::domain::ParamLocation;
 
 /// Smoke-test: discover commands from the bundled petstore fixture.
@@ -22,23 +22,46 @@ async fn integration_openapi_discover_petstore() {
 
     assert_eq!(cmds.len(), 3, "expected exactly 3 petstore commands");
 
-    let list = cmds.iter().find(|c| c.name == "list-pets").expect("list-pets missing");
+    let list = cmds
+        .iter()
+        .find(|c| c.name == "list-pets")
+        .expect("list-pets missing");
     assert_eq!(list.source_name, "listPets");
     assert!(
-        list.params.iter().all(|p| matches!(p.location, ParamLocation::Query | ParamLocation::Path | ParamLocation::Header | ParamLocation::Body)),
+        list.params.iter().all(|p| matches!(
+            p.location,
+            ParamLocation::Query
+                | ParamLocation::Path
+                | ParamLocation::Header
+                | ParamLocation::Body
+        )),
         "unexpected param location on list-pets"
     );
 
-    let create = cmds.iter().find(|c| c.name == "create-pet").expect("create-pet missing");
-    let name_param = create.params.iter().find(|p| p.name == "name").expect("name param missing");
+    let create = cmds
+        .iter()
+        .find(|c| c.name == "create-pet")
+        .expect("create-pet missing");
+    let name_param = create
+        .params
+        .iter()
+        .find(|p| p.name == "name")
+        .expect("name param missing");
     assert!(name_param.required, "name param should be required");
     assert!(
         matches!(name_param.location, ParamLocation::Body),
         "name param should be in request body"
     );
 
-    let show = cmds.iter().find(|c| c.name == "show-pet-by-id").expect("show-pet-by-id missing");
-    let id_param = show.params.iter().find(|p| p.name == "pet-id").expect("petId param missing");
+    let show = cmds
+        .iter()
+        .find(|c| c.name == "show-pet-by-id")
+        .expect("show-pet-by-id missing");
+    let id_param = show
+        .params
+        .iter()
+        .find(|p| p.name == "pet-id")
+        .expect("petId param missing");
     assert!(id_param.required, "pet-id param should be required");
     assert!(
         matches!(id_param.location, ParamLocation::Path),

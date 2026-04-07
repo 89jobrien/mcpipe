@@ -1,11 +1,13 @@
-use mcpipe::backend::graphql::GraphQlBackend;
 use mcpipe::backend::Backend;
+use mcpipe::backend::graphql::GraphQlBackend;
 
 #[tokio::test]
 async fn discover_from_introspection_fixture() {
-    let fixture = std::fs::read_to_string(
-        concat!(env!("CARGO_MANIFEST_DIR"), "/tests/fixtures/introspection.json")
-    ).unwrap();
+    let fixture = std::fs::read_to_string(concat!(
+        env!("CARGO_MANIFEST_DIR"),
+        "/tests/fixtures/introspection.json"
+    ))
+    .unwrap();
     let introspection: serde_json::Value = serde_json::from_str(&fixture).unwrap();
 
     let backend = GraphQlBackend::from_introspection(
@@ -22,7 +24,14 @@ async fn discover_from_introspection_fixture() {
     assert_eq!(pets.params[0].name, "limit");
     assert!(!pets.params[0].required);
 
-    let create = cmds.iter().find(|c| c.name == "create-pet").expect("createPet mutation");
-    let name_p = create.params.iter().find(|p| p.name == "name").expect("name param");
+    let create = cmds
+        .iter()
+        .find(|c| c.name == "create-pet")
+        .expect("createPet mutation");
+    let name_p = create
+        .params
+        .iter()
+        .find(|p| p.name == "name")
+        .expect("name param");
     assert!(name_p.required);
 }

@@ -1,8 +1,8 @@
 use anyhow::{Context, Result};
 use async_trait::async_trait;
 
-use crate::domain::{BackendError, CommandDef, ArgMap, ParamDef, ParamLocation};
 use super::Backend;
+use crate::domain::{ArgMap, BackendError, CommandDef, ParamDef, ParamLocation};
 
 pub struct OpenApiBackend {
     spec: serde_json::Value,
@@ -13,22 +13,34 @@ pub struct OpenApiBackend {
 
 impl OpenApiBackend {
     pub fn from_file(path: &str) -> Result<Self> {
-        use crate::deser::{parse_any, FormatHint};
-        let bytes = std::fs::read(path)
-            .with_context(|| format!("reading spec file {path}"))?;
+        use crate::deser::{FormatHint, parse_any};
+        let bytes = std::fs::read(path).with_context(|| format!("reading spec file {path}"))?;
         let hint = std::path::Path::new(path)
             .extension()
             .and_then(|e| e.to_str())
             .map(FormatHint::from_extension)
             .unwrap_or(FormatHint::Unknown);
-        let spec = parse_any(&bytes, hint)
-            .with_context(|| format!("parsing spec file {path}"))?;
+        let spec = parse_any(&bytes, hint).with_context(|| format!("parsing spec file {path}"))?;
         let base_url = extract_base_url(&spec);
-        Ok(Self { spec, base_url, auth_headers: vec![], client: reqwest::Client::new() })
+        Ok(Self {
+            spec,
+            base_url,
+            auth_headers: vec![],
+            client: reqwest::Client::new(),
+        })
     }
 
-    pub fn from_json(spec: serde_json::Value, base_url: String, auth_headers: Vec<(String, String)>) -> Self {
-        Self { spec, base_url, auth_headers, client: reqwest::Client::new() }
+    pub fn from_json(
+        spec: serde_json::Value,
+        base_url: String,
+        auth_headers: Vec<(String, String)>,
+    ) -> Self {
+        Self {
+            spec,
+            base_url,
+            auth_headers,
+            client: reqwest::Client::new(),
+        }
     }
 
     pub fn with_base_url(mut self, base_url: String) -> Self {
@@ -43,26 +55,32 @@ impl OpenApiBackend {
 
     fn build_commands(&self) -> Result<Vec<CommandDef>, BackendError> {
         let spec = resolve_refs(&self.spec);
-        let paths = spec.get("paths")
+        let paths = spec
+            .get("paths")
             .and_then(|p| p.as_object())
             .ok_or_else(|| BackendError::Schema("no paths in spec".to_string()))?;
 
         let mut cmds = vec![];
 
         for (path, path_item) in paths {
-            let path_item = path_item.as_object()
+            let path_item = path_item
+                .as_object()
                 .ok_or_else(|| BackendError::Schema(format!("invalid path item for {path}")))?;
 
             for method in &["get", "post", "put", "patch", "delete"] {
-                let Some(op) = path_item.get(*method) else { continue };
+                let Some(op) = path_item.get(*method) else {
+                    continue;
+                };
 
                 let fallback_id = format!("{}-{}", method, path.trim_matches('/'));
-                let operation_id = op.get("operationId")
+                let operation_id = op
+                    .get("operationId")
                     .and_then(|v| v.as_str())
                     .unwrap_or(&fallback_id);
 
                 let name = to_kebab(operation_id);
-                let description = op.get("summary")
+                let description = op
+                    .get("summary")
                     .or_else(|| op.get("description"))
                     .and_then(|v| v.as_str())
                     .unwrap_or("")
@@ -75,16 +93,24 @@ impl OpenApiBackend {
                     for p in parameters {
                         let pname = p.get("name").and_then(|v| v.as_str()).unwrap_or("param");
                         let location = match p.get("in").and_then(|v| v.as_str()) {
-                            Some("query")  => ParamLocation::Query,
-                            Some("path")   => ParamLocation::Path,
+                            Some("query") => ParamLocation::Query,
+                            Some("path") => ParamLocation::Path,
                             Some("header") => ParamLocation::Header,
-                            _              => ParamLocation::Body,
+                            _ => ParamLocation::Body,
                         };
-                        let required = p.get("required")
+                        let required = p
+                            .get("required")
                             .and_then(|v| v.as_bool())
                             .unwrap_or(matches!(location, ParamLocation::Path));
-                        let schema = p.get("schema").cloned().unwrap_or(serde_json::json!({"type":"string"}));
-                        let desc = p.get("description").and_then(|v| v.as_str()).unwrap_or("").to_string();
+                        let schema = p
+                            .get("schema")
+                            .cloned()
+                            .unwrap_or(serde_json::json!({"type":"string"}));
+                        let desc = p
+                            .get("description")
+                            .and_then(|v| v.as_str())
+                            .unwrap_or("")
+                            .to_string();
 
                         params.push(ParamDef {
                             name: to_kebab(pname),
@@ -99,9 +125,7 @@ impl OpenApiBackend {
 
                 // Request body params (application/json schema properties)
                 if let Some(body) = op.get("requestBody") {
-                    let schema = body
-                        .pointer("/content/application~1json/schema")
-                        .cloned();
+                    let schema = body.pointer("/content/application~1json/schema").cloned();
 
                     if let Some(schema) = schema {
                         let required_fields: Vec<&str> = schema
@@ -113,7 +137,11 @@ impl OpenApiBackend {
                         if let Some(props) = schema.get("properties").and_then(|p| p.as_object()) {
                             for (prop_name, prop_schema) in props {
                                 let required = required_fields.contains(&prop_name.as_str());
-                                let desc = prop_schema.get("description").and_then(|v| v.as_str()).unwrap_or("").to_string();
+                                let desc = prop_schema
+                                    .get("description")
+                                    .and_then(|v| v.as_str())
+                                    .unwrap_or("")
+                                    .to_string();
                                 params.push(ParamDef {
                                     name: to_kebab(prop_name),
                                     original_name: prop_name.clone(),
@@ -146,7 +174,11 @@ impl Backend for OpenApiBackend {
         self.build_commands()
     }
 
-    async fn execute(&self, cmd: &CommandDef, args: ArgMap) -> Result<serde_json::Value, BackendError> {
+    async fn execute(
+        &self,
+        cmd: &CommandDef,
+        args: ArgMap,
+    ) -> Result<serde_json::Value, BackendError> {
         let (path_template, method) = find_operation(&self.spec, &cmd.source_name)
             .ok_or_else(|| BackendError::NotFound(cmd.source_name.clone()))?;
 
@@ -168,13 +200,19 @@ impl Backend for OpenApiBackend {
                     );
                 }
                 ParamLocation::Query => {
-                    query_params.push((param.original_name.clone(), val.to_string().trim_matches('"').to_string()));
+                    query_params.push((
+                        param.original_name.clone(),
+                        val.to_string().trim_matches('"').to_string(),
+                    ));
                 }
                 ParamLocation::Body => {
                     body_map.insert(param.original_name.clone(), val);
                 }
                 ParamLocation::Header => {
-                    header_params.push((param.original_name.clone(), val.as_str().unwrap_or(&val.to_string()).to_string()));
+                    header_params.push((
+                        param.original_name.clone(),
+                        val.as_str().unwrap_or(&val.to_string()).to_string(),
+                    ));
                 }
                 ParamLocation::ToolInput => {}
             }
@@ -183,12 +221,12 @@ impl Backend for OpenApiBackend {
         let url = format!("{}{}", self.base_url.trim_end_matches('/'), url_path);
 
         let mut req = match method.as_str() {
-            "get"    => self.client.get(&url),
-            "post"   => self.client.post(&url),
-            "put"    => self.client.put(&url),
-            "patch"  => self.client.patch(&url),
+            "get" => self.client.get(&url),
+            "post" => self.client.post(&url),
+            "put" => self.client.put(&url),
+            "patch" => self.client.patch(&url),
             "delete" => self.client.delete(&url),
-            _        => self.client.get(&url),
+            _ => self.client.get(&url),
         };
 
         for (k, v) in &self.auth_headers {
@@ -206,14 +244,22 @@ impl Backend for OpenApiBackend {
             req = req.json(&body_map);
         }
 
-        let resp = req.send().await
+        let resp = req
+            .send()
+            .await
             .map_err(|e| BackendError::Transport(e.to_string()))?;
 
         if !resp.status().is_success() {
-            return Err(BackendError::Execution(format!("HTTP {}: {}", resp.status(), resp.text().await.unwrap_or_default())));
+            return Err(BackendError::Execution(format!(
+                "HTTP {}: {}",
+                resp.status(),
+                resp.text().await.unwrap_or_default()
+            )));
         }
 
-        resp.json().await.map_err(|e| BackendError::Execution(e.to_string()))
+        resp.json()
+            .await
+            .map_err(|e| BackendError::Execution(e.to_string()))
     }
 }
 
@@ -224,7 +270,8 @@ fn find_operation(spec: &serde_json::Value, operation_id: &str) -> Option<(Strin
         for method in &["get", "post", "put", "patch", "delete"] {
             if let Some(op) = pi.get(*method) {
                 let fallback = format!("{}-{}", method, path.trim_matches('/'));
-                let oid = op.get("operationId")
+                let oid = op
+                    .get("operationId")
                     .and_then(|v| v.as_str())
                     .unwrap_or(&fallback);
                 if oid == operation_id {

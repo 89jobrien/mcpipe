@@ -1,5 +1,5 @@
-use clap::{Arg, ArgMatches, Command};
 use crate::domain::{ArgMap, CommandDef, ParamDef};
+use clap::{Arg, ArgMatches, Command};
 
 /// Build a clap Command tree from a list of CommandDefs.
 /// The returned Command has one subcommand per CommandDef.
@@ -12,8 +12,7 @@ pub fn build_command(app_name: &str, cmds: &[CommandDef]) -> Command {
 
     for cmd in cmds {
         let name_static: &'static str = Box::leak(cmd.name.clone().into_boxed_str());
-        let mut sub = Command::new(name_static)
-            .about(cmd.description.clone());
+        let mut sub = Command::new(name_static).about(cmd.description.clone());
 
         for param in &cmd.params {
             let arg = build_arg(param);
@@ -36,7 +35,11 @@ pub fn build_command(app_name: &str, cmds: &[CommandDef]) -> Command {
 }
 
 fn build_arg(param: &ParamDef) -> Arg {
-    let schema_type = param.schema.get("type").and_then(|v| v.as_str()).unwrap_or("string");
+    let schema_type = param
+        .schema
+        .get("type")
+        .and_then(|v| v.as_str())
+        .unwrap_or("string");
     let is_bool = schema_type == "boolean";
 
     // clap 4.6 requires 'static for Arg IDs; leak to satisfy the bound
@@ -64,7 +67,11 @@ pub fn extract_args(matches: &ArgMatches, cmd: &CommandDef) -> ArgMap {
     let mut map = ArgMap::new();
 
     for param in &cmd.params {
-        let schema_type = param.schema.get("type").and_then(|v| v.as_str()).unwrap_or("string");
+        let schema_type = param
+            .schema
+            .get("type")
+            .and_then(|v| v.as_str())
+            .unwrap_or("string");
         let is_bool = schema_type == "boolean";
 
         if is_bool {
@@ -80,7 +87,10 @@ pub fn extract_args(matches: &ArgMatches, cmd: &CommandDef) -> ArgMap {
 
     // Capture per-subcommand --fields override as a special key
     if let Some(fields) = matches.get_one::<String>("__fields") {
-        map.insert("__fields".to_string(), serde_json::Value::String(fields.clone()));
+        map.insert(
+            "__fields".to_string(),
+            serde_json::Value::String(fields.clone()),
+        );
     }
 
     map
@@ -88,15 +98,18 @@ pub fn extract_args(matches: &ArgMatches, cmd: &CommandDef) -> ArgMap {
 
 fn coerce(value: &str, schema: &serde_json::Value) -> serde_json::Value {
     match schema.get("type").and_then(|v| v.as_str()) {
-        Some("integer") => value.parse::<i64>()
+        Some("integer") => value
+            .parse::<i64>()
             .map(serde_json::Value::from)
             .unwrap_or_else(|_| serde_json::Value::String(value.to_string())),
-        Some("number") => value.parse::<f64>()
+        Some("number") => value
+            .parse::<f64>()
             .map(serde_json::Value::from)
             .unwrap_or_else(|_| serde_json::Value::String(value.to_string())),
-        Some("boolean") => serde_json::Value::Bool(
-            matches!(value.to_lowercase().as_str(), "true" | "1" | "yes")
-        ),
+        Some("boolean") => serde_json::Value::Bool(matches!(
+            value.to_lowercase().as_str(),
+            "true" | "1" | "yes"
+        )),
         Some("array") | Some("object") => serde_json::from_str(value)
             .unwrap_or_else(|_| serde_json::Value::String(value.to_string())),
         _ => serde_json::Value::String(value.to_string()),

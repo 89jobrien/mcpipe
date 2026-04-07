@@ -1,5 +1,5 @@
-use mcpipe::backend::mcp::McpBackend;
 use mcpipe::backend::Backend;
+use mcpipe::backend::mcp::McpBackend;
 use mcpipe::domain::ParamLocation;
 
 #[tokio::test]
@@ -16,7 +16,10 @@ async fn mcp_stdio_discover() {
     assert_eq!(cmds[0].params.len(), 1);
     assert_eq!(cmds[0].params[0].name, "message");
     assert!(cmds[0].params[0].required);
-    assert!(matches!(cmds[0].params[0].location, ParamLocation::ToolInput));
+    assert!(matches!(
+        cmds[0].params[0].location,
+        ParamLocation::ToolInput
+    ));
 }
 
 #[tokio::test]
@@ -34,7 +37,8 @@ async fn mcp_stdio_execute() {
 
     let result = backend.execute(echo_cmd, args).await.unwrap();
     // MCP returns content array: [{"type": "text", "text": "..."}]
-    let text = result.get(0)
+    let text = result
+        .get(0)
         .and_then(|v| v.get("text"))
         .and_then(|v| v.as_str())
         .unwrap_or_else(|| result.as_str().unwrap_or(""));

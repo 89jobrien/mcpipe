@@ -1,8 +1,8 @@
 use async_trait::async_trait;
 
-use crate::domain::{ArgMap, BackendError, CommandDef, ParamDef, ParamLocation};
 use super::Backend;
 use crate::backend::openapi::to_kebab;
+use crate::domain::{ArgMap, BackendError, CommandDef, ParamDef, ParamLocation};
 
 pub struct GraphQlBackend {
     endpoint: String,
@@ -13,7 +13,12 @@ pub struct GraphQlBackend {
 
 impl GraphQlBackend {
     pub fn new(endpoint: String, auth_headers: Vec<(String, String)>) -> Self {
-        Self { endpoint, introspection: None, auth_headers, fields_override: None }
+        Self {
+            endpoint,
+            introspection: None,
+            auth_headers,
+            fields_override: None,
+        }
     }
 
     pub fn from_introspection(
@@ -21,7 +26,12 @@ impl GraphQlBackend {
         introspection: serde_json::Value,
         auth_headers: Vec<(String, String)>,
     ) -> Self {
-        Self { endpoint, introspection: Some(introspection), auth_headers, fields_override: None }
+        Self {
+            endpoint,
+            introspection: Some(introspection),
+            auth_headers,
+            fields_override: None,
+        }
     }
 
     pub fn with_fields_override(mut self, fields: String) -> Self {
@@ -33,24 +43,39 @@ impl GraphQlBackend {
         const INTROSPECTION_QUERY: &str = r#"{ __schema { queryType { name } mutationType { name } types { name fields(includeDeprecated: false) { name description args { name description type { kind name ofType { kind name ofType { kind name } } } defaultValue } type { kind name ofType { kind name ofType { kind name } } } } } } }"#;
 
         let client = reqwest::Client::new();
-        let mut req = client.post(&self.endpoint)
+        let mut req = client
+            .post(&self.endpoint)
             .json(&serde_json::json!({"query": INTROSPECTION_QUERY}));
         for (k, v) in &self.auth_headers {
             req = req.header(k, v);
         }
-        let resp = req.send().await
+        let resp = req
+            .send()
+            .await
             .map_err(|e| BackendError::Transport(e.to_string()))?;
-        resp.json().await.map_err(|e| BackendError::Schema(e.to_string()))
+        resp.json()
+            .await
+            .map_err(|e| BackendError::Schema(e.to_string()))
     }
 
-    fn build_commands(&self, introspection: &serde_json::Value) -> Result<Vec<CommandDef>, BackendError> {
-        let schema = introspection.pointer("/data/__schema")
+    fn build_commands(
+        &self,
+        introspection: &serde_json::Value,
+    ) -> Result<Vec<CommandDef>, BackendError> {
+        let schema = introspection
+            .pointer("/data/__schema")
             .ok_or_else(|| BackendError::Schema("no __schema in introspection".to_string()))?;
 
-        let query_type = schema.pointer("/queryType/name").and_then(|v| v.as_str()).unwrap_or("Query");
-        let mutation_type = schema.pointer("/mutationType/name").and_then(|v| v.as_str());
+        let query_type = schema
+            .pointer("/queryType/name")
+            .and_then(|v| v.as_str())
+            .unwrap_or("Query");
+        let mutation_type = schema
+            .pointer("/mutationType/name")
+            .and_then(|v| v.as_str());
 
-        let types = schema.get("types")
+        let types = schema
+            .get("types")
             .and_then(|t| t.as_array())
             .ok_or_else(|| BackendError::Schema("no types array".to_string()))?;
 
@@ -72,16 +97,30 @@ impl GraphQlBackend {
 
             for field in fields {
                 let field_name = field.get("name").and_then(|v| v.as_str()).unwrap_or("op");
-                let description = field.get("description").and_then(|v| v.as_str()).unwrap_or("").to_string();
+                let description = field
+                    .get("description")
+                    .and_then(|v| v.as_str())
+                    .unwrap_or("")
+                    .to_string();
 
-                let args = field.get("args").and_then(|a| a.as_array()).map(|a| a.as_slice()).unwrap_or(&[]);
+                let args = field
+                    .get("args")
+                    .and_then(|a| a.as_array())
+                    .map(|a| a.as_slice())
+                    .unwrap_or(&[]);
                 let mut params = vec![];
 
                 for arg in args {
                     let aname = arg.get("name").and_then(|v| v.as_str()).unwrap_or("arg");
-                    let adesc = arg.get("description").and_then(|v| v.as_str()).unwrap_or("").to_string();
+                    let adesc = arg
+                        .get("description")
+                        .and_then(|v| v.as_str())
+                        .unwrap_or("")
+                        .to_string();
                     let required = is_non_null(arg.get("type").unwrap_or(&serde_json::Value::Null));
-                    let schema = graphql_type_to_json_schema(arg.get("type").unwrap_or(&serde_json::Value::Null));
+                    let schema = graphql_type_to_json_schema(
+                        arg.get("type").unwrap_or(&serde_json::Value::Null),
+                    );
 
                     params.push(ParamDef {
                         name: to_kebab(aname),
@@ -116,11 +155,19 @@ impl Backend for GraphQlBackend {
         self.build_commands(&intro)
     }
 
-    async fn execute(&self, cmd: &CommandDef, args: ArgMap) -> Result<serde_json::Value, BackendError> {
+    async fn execute(
+        &self,
+        cmd: &CommandDef,
+        args: ArgMap,
+    ) -> Result<serde_json::Value, BackendError> {
         // Extract per-subcommand fields override (not a real GraphQL arg)
-        let per_call_fields = args.get("__fields").and_then(|v| v.as_str()).map(|s| s.to_string());
+        let per_call_fields = args
+            .get("__fields")
+            .and_then(|v| v.as_str())
+            .map(|s| s.to_string());
 
-        let arg_str: String = args.iter()
+        let arg_str: String = args
+            .iter()
             .filter(|(k, _)| k.as_str() != "__fields")
             .map(|(k, v)| format!("{}: {}", k, v))
             .collect::<Vec<_>>()
@@ -138,22 +185,30 @@ impl Backend for GraphQlBackend {
         let query = format!("{{ {} {{ {} }} }}", call, fields);
 
         let client = reqwest::Client::new();
-        let mut req = client.post(&self.endpoint)
+        let mut req = client
+            .post(&self.endpoint)
             .json(&serde_json::json!({"query": query}));
         for (k, v) in &self.auth_headers {
             req = req.header(k, v);
         }
 
-        let resp = req.send().await
+        let resp = req
+            .send()
+            .await
             .map_err(|e| BackendError::Transport(e.to_string()))?;
-        let val: serde_json::Value = resp.json().await
+        let val: serde_json::Value = resp
+            .json()
+            .await
             .map_err(|e| BackendError::Execution(e.to_string()))?;
 
         if let Some(errors) = val.get("errors") {
             return Err(BackendError::Execution(errors.to_string()));
         }
 
-        Ok(val.pointer(&format!("/data/{}", cmd.source_name)).cloned().unwrap_or(val))
+        Ok(val
+            .pointer(&format!("/data/{}", cmd.source_name))
+            .cloned()
+            .unwrap_or(val))
     }
 }
 
@@ -162,14 +217,16 @@ fn is_non_null(type_val: &serde_json::Value) -> bool {
 }
 
 fn graphql_type_to_json_schema(type_val: &serde_json::Value) -> serde_json::Value {
-    let name = type_val.get("name").and_then(|v| v.as_str())
+    let name = type_val
+        .get("name")
+        .and_then(|v| v.as_str())
         .or_else(|| type_val.pointer("/ofType/name").and_then(|v| v.as_str()))
         .unwrap_or("String");
 
     match name {
-        "Int"     => serde_json::json!({"type": "integer"}),
-        "Float"   => serde_json::json!({"type": "number"}),
+        "Int" => serde_json::json!({"type": "integer"}),
+        "Float" => serde_json::json!({"type": "number"}),
         "Boolean" => serde_json::json!({"type": "boolean"}),
-        _         => serde_json::json!({"type": "string"}),
+        _ => serde_json::json!({"type": "string"}),
     }
 }

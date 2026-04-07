@@ -44,9 +44,9 @@ pub fn parse_any(bytes: &[u8], hint: FormatHint) -> Result<serde_json::Value> {
     let text = std::str::from_utf8(bytes).context("spec is not valid UTF-8")?;
 
     match hint {
-        FormatHint::Json  => parse_json(text),
-        FormatHint::Yaml  => parse_yaml(text),
-        FormatHint::Toml  => parse_toml(text),
+        FormatHint::Json => parse_json(text),
+        FormatHint::Yaml => parse_yaml(text),
+        FormatHint::Toml => parse_toml(text),
         FormatHint::Json5 => parse_json5(text),
         FormatHint::Unknown => {
             // Try formats in order of prevalence
@@ -126,8 +126,17 @@ mod tests {
 
     #[test]
     fn hint_from_content_type() {
-        assert_eq!(FormatHint::from_content_type("application/yaml"), FormatHint::Yaml);
-        assert_eq!(FormatHint::from_content_type("application/json"), FormatHint::Json);
-        assert_eq!(FormatHint::from_content_type("text/plain"), FormatHint::Unknown);
+        assert_eq!(
+            FormatHint::from_content_type("application/yaml"),
+            FormatHint::Yaml
+        );
+        assert_eq!(
+            FormatHint::from_content_type("application/json"),
+            FormatHint::Json
+        );
+        assert_eq!(
+            FormatHint::from_content_type("text/plain"),
+            FormatHint::Unknown
+        );
     }
 }

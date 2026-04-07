@@ -33,15 +33,19 @@ pub fn generate(tool_name: &str, version: &str, commands: &[CommandDef]) -> serd
 }
 
 fn build_get_operation(cmd: &CommandDef) -> serde_json::Value {
-    let parameters: Vec<serde_json::Value> = cmd.params.iter().map(|p| {
-        serde_json::json!({
-            "name": p.name,
-            "in": "query",
-            "required": p.required,
-            "description": p.description,
-            "schema": p.schema,
+    let parameters: Vec<serde_json::Value> = cmd
+        .params
+        .iter()
+        .map(|p| {
+            serde_json::json!({
+                "name": p.name,
+                "in": "query",
+                "required": p.required,
+                "description": p.description,
+                "schema": p.schema,
+            })
         })
-    }).collect();
+        .collect();
 
     serde_json::json!({
         "summary": cmd.description,
@@ -66,7 +70,10 @@ fn build_post_operation(cmd: &CommandDef) -> serde_json::Value {
 
     for p in &cmd.params {
         let mut prop = serde_json::Map::new();
-        prop.insert("description".to_string(), serde_json::Value::String(p.description.clone()));
+        prop.insert(
+            "description".to_string(),
+            serde_json::Value::String(p.description.clone()),
+        );
         if let serde_json::Value::Object(schema_fields) = &p.schema {
             for (k, v) in schema_fields {
                 prop.insert(k.clone(), v.clone());
@@ -122,31 +129,27 @@ mod tests {
                 name: "todo-list".to_string(),
                 description: "List todos".to_string(),
                 source_name: "doob".to_string(),
-                params: vec![
-                    ParamDef {
-                        name: "status".to_string(),
-                        original_name: "status".to_string(),
-                        required: false,
-                        description: "Filter by status".to_string(),
-                        location: ParamLocation::ToolInput,
-                        schema: serde_json::json!({"type": "string"}),
-                    },
-                ],
+                params: vec![ParamDef {
+                    name: "status".to_string(),
+                    original_name: "status".to_string(),
+                    required: false,
+                    description: "Filter by status".to_string(),
+                    location: ParamLocation::ToolInput,
+                    schema: serde_json::json!({"type": "string"}),
+                }],
             },
             CommandDef {
                 name: "todo-add".to_string(),
                 description: "Add todos".to_string(),
                 source_name: "doob".to_string(),
-                params: vec![
-                    ParamDef {
-                        name: "content".to_string(),
-                        original_name: "content".to_string(),
-                        required: true,
-                        description: "Task description".to_string(),
-                        location: ParamLocation::ToolInput,
-                        schema: serde_json::json!({"type": "string"}),
-                    },
-                ],
+                params: vec![ParamDef {
+                    name: "content".to_string(),
+                    original_name: "content".to_string(),
+                    required: true,
+                    description: "Task description".to_string(),
+                    location: ParamLocation::ToolInput,
+                    schema: serde_json::json!({"type": "string"}),
+                }],
             },
         ]
     }
@@ -172,7 +175,10 @@ mod tests {
     fn post_command_maps_to_post_path() {
         let doc = generate("doob", "0.1.0", &sample_commands());
         let path = &doc["paths"]["/todo-add"];
-        assert!(path["post"].is_object(), "todo-add (has required param) should be POST");
+        assert!(
+            path["post"].is_object(),
+            "todo-add (has required param) should be POST"
+        );
         let body = &path["post"]["requestBody"]["content"]["application/json"]["schema"];
         assert_eq!(body["properties"]["content"]["type"], "string");
         assert!(body["properties"]["content"]["description"].is_string());

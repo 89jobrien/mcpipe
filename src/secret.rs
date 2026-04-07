@@ -29,7 +29,10 @@ mod tests {
     #[test]
     fn env_prefix() {
         unsafe { std::env::set_var("MCPIPE_TEST_SECRET", "secret123") };
-        assert_eq!(resolve_secret("env:MCPIPE_TEST_SECRET").unwrap(), "secret123");
+        assert_eq!(
+            resolve_secret("env:MCPIPE_TEST_SECRET").unwrap(),
+            "secret123"
+        );
     }
 
     #[test]

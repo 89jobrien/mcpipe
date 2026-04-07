@@ -2,8 +2,8 @@
 mod tests {
     #[tokio::test]
     async fn mcpipe_cli_list_doob() {
-        use mcpipe::backend::cli::CliBackend;
         use mcpipe::backend::Backend;
+        use mcpipe::backend::cli::CliBackend;
         let backend = CliBackend::new("doob");
         let cmds = backend.discover().await.unwrap();
         assert!(cmds.iter().any(|c| c.name == "todo-list"));
@@ -11,8 +11,8 @@ mod tests {
 
     #[tokio::test]
     async fn gen_openapi_from_doob() {
-        use mcpipe::backend::cli::CliBackend;
         use mcpipe::backend::Backend;
+        use mcpipe::backend::cli::CliBackend;
         use mcpipe::openapi_gen;
         let backend = CliBackend::new("doob");
         let cmds = backend.discover().await.unwrap();

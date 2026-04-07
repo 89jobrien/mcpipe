@@ -1,10 +1,10 @@
-pub mod scanner;
+pub mod backend;
+pub mod cache;
+pub mod cli;
 pub mod deser;
 pub mod discovery;
 pub mod domain;
-pub mod backend;
-pub mod secret;
 pub mod format;
-pub mod cache;
-pub mod cli;
 pub mod openapi_gen;
+pub mod scanner;
+pub mod secret;

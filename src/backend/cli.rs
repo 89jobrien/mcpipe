@@ -36,7 +36,9 @@ pub struct CliBackend {
 
 impl CliBackend {
     pub fn new(command: impl Into<String>) -> Self {
-        Self { command: command.into() }
+        Self {
+            command: command.into(),
+        }
     }
 }
 
@@ -93,7 +95,11 @@ impl Backend for CliBackend {
         Ok(cmds)
     }
 
-    async fn execute(&self, cmd: &CommandDef, args: ArgMap) -> Result<serde_json::Value, BackendError> {
+    async fn execute(
+        &self,
+        cmd: &CommandDef,
+        args: ArgMap,
+    ) -> Result<serde_json::Value, BackendError> {
         use tokio::process::Command;
 
         // "todo-list" -> ["todo", "list"]; single-word "search" -> ["search"].

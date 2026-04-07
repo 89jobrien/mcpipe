@@ -4,12 +4,26 @@ use std::path::Path;
 use crate::discovery::{BackendKind, DiscoveredSource, SourceScanner};
 
 const SKIP_DIRS: &[&str] = &[
-    "target", "node_modules", ".git", ".cache", "dist", "build",
-    "baml_client", "vendor", "generated", "gen", ".venv", "venv",
+    "target",
+    "node_modules",
+    ".git",
+    ".cache",
+    "dist",
+    "build",
+    "baml_client",
+    "vendor",
+    "generated",
+    "gen",
+    ".venv",
+    "venv",
 ];
 const OPENAPI_FILENAMES: &[&str] = &[
-    "openapi.yaml", "openapi.yml", "openapi.json",
-    "swagger.yaml", "swagger.yml", "swagger.json",
+    "openapi.yaml",
+    "openapi.yml",
+    "openapi.json",
+    "swagger.yaml",
+    "swagger.yml",
+    "swagger.json",
 ];
 
 /// Walks workspace root directories looking for OpenAPI spec files.
@@ -34,14 +48,18 @@ impl WorkspaceScanner {
         if !OPENAPI_FILENAMES.contains(&fname) {
             return false;
         }
-        let Ok(bytes) = std::fs::read(path) else { return false };
+        let Ok(bytes) = std::fs::read(path) else {
+            return false;
+        };
         let snippet = String::from_utf8_lossy(&bytes[..bytes.len().min(512)]);
         snippet.contains("openapi:") || snippet.contains(r#""openapi":"#)
     }
 
     fn walk(root: &Path, repo_name: &str) -> Vec<DiscoveredSource> {
         let mut sources = vec![];
-        let Ok(entries) = std::fs::read_dir(root) else { return sources };
+        let Ok(entries) = std::fs::read_dir(root) else {
+            return sources;
+        };
 
         for entry in entries.flatten() {
             let path = entry.path();
@@ -60,7 +78,9 @@ impl WorkspaceScanner {
 
                 sources.push(DiscoveredSource {
                     name,
-                    kind: BackendKind::OpenApiFile { path: path.to_string_lossy().to_string() },
+                    kind: BackendKind::OpenApiFile {
+                        path: path.to_string_lossy().to_string(),
+                    },
                     origin: root.to_string_lossy().to_string(),
                 });
             }
@@ -75,7 +95,9 @@ impl SourceScanner for WorkspaceScanner {
     async fn scan(&self) -> Vec<DiscoveredSource> {
         let mut sources = vec![];
         for root in &self.roots {
-            let Ok(entries) = std::fs::read_dir(root) else { continue };
+            let Ok(entries) = std::fs::read_dir(root) else {
+                continue;
+            };
             for entry in entries.flatten() {
                 let p = entry.path();
                 if p.is_dir() {
