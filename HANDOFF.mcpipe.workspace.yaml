@@ -1,6 +1,6 @@
 project: mcpipe
 id: mcpipe
-updated: 2026-04-06
+updated: 2026-04-07
 items:
 - id: mcpipe-17
   name: circular-ref-infinite-loop
@@ -35,6 +35,23 @@ items:
   files:
   - src/discovery.rs
   extra: []
+- id: mcpipe-20
+  name: ci-standardize
+  priority: P2
+  status: done
+  title: Standardize CI — ci.yml, nightly.yml, deny.toml, git hooks
+  description: |
+    Add canonical three-tier CI (compile-check → test + audit + machete), nightly geiger
+    unsafe audit, deny.toml, and git hooks via Justfile. Fixed: cargo fmt drift (25 files),
+    rustls-pemfile RUSTSEC-2025-0134 advisory ignore (transitive via eventsource-client,
+    no fix available). All CI jobs green.
+  files:
+  - .github/workflows/ci.yml
+  - .github/workflows/nightly.yml
+  - deny.toml
+  - Justfile
+  extra: []
+  completed: 2026-04-07
 - id: mcpipe-6
   doob_uuid: a8aefce8-b10e-4960-bac3-137e6ad10f5d
   name: auth-headers-field-rename
@@ -104,9 +121,6 @@ items:
   priority: P1
   status: done
   title: Add `impl Drop for HttpSession` calling `self._stream_abort.abort()`
-  description: |
-    AbortHandle is stored on HttpSession but never fired — no Drop impl exists.
-    The SSE background task leaks on every session drop.
   files:
   - src/backend/mcp.rs
   extra: []
@@ -117,10 +131,6 @@ items:
   priority: P2
   status: done
   title: Write OpenAPI spec and API.md for maestro-api
-  description: |
-    OpenAPI spec covering all 25 endpoints at maestro-api/maestro-api.openapi.yaml.
-    API.md documents all endpoints with live response shapes, error codes,
-    session lifecycle, and mcpipe usage examples.
   files:
   - maestro-api/maestro-api.openapi.yaml
   - maestro-api/API.md
@@ -132,10 +142,6 @@ items:
   priority: P1
   status: done
   title: Merge PR
-  description: |
-    PR #1 (feat/cli-backend) adds CliBackend, openapi_gen module, and --cli/--gen-openapi
-    flags. After merge: run mcpipe --cli doob --gen-openapi --openapi-output doob.openapi.yaml
-    to produce the spec for BAML integration (separate plan in devloop repo).
   files:
   - src/backend/cli.rs
   - src/openapi_gen.rs
@@ -160,14 +166,6 @@ items:
   priority: P2
   status: done
   title: Write doob.baml in devloop using generated OpenAPI spec
-  description: |
-    Once mcpipe PR #1 and doob PR #2 merge:
-    1. Run: mcpipe --cli doob --gen-openapi --openapi-output doob.openapi.yaml
-    2. Write devloop/crates/baml/baml_src/doob.baml — one class per response shape,
-       one function per operation, following maestro.baml pattern.
-    3. All basic functions use haiku client.
-    4. Run baml generate to produce Rust client.
-    Repeat for obfsck, devkit, minibox once they get schema subcommands.
   files:
   - docs/superpowers/plans/2026-04-04-cli-backend-openapi-gen.md
   extra:
@@ -188,18 +186,12 @@ items:
   status: done
   title: Add round-trip test for global-flag argv stripping
   completed: 2026-04-05
-  description: |
-    Manual argv stripping in main.rs must be kept in sync with build_global_parser by
-    hand. A mismatch silently passes unknown flags into the dynamic subcommand parser.
   files:
   - src/main.rs
   extra:
   - date: 2026-04-03
     type: note
     note: Superseded by conductor task xzo88d4ls8hu6h1lo3ft.
-  - date: 2026-04-03
-    type: note
-    note: Superseded by conductor task xzo88d4ls8hu6h1lo3ft (same finding, better description).
 - id: mcpipe-9
   doob_uuid: cf4c35f5-1806-4dcb-b260-e26f47836439
   name: reqwest-client-per-call
@@ -207,8 +199,6 @@ items:
   status: done
   title: Build reqwest::Client once in OpenApiBackend, not per execute call
   completed: 2026-04-05
-  description: |
-    reqwest::Client::new() on every execute call allocates a new connection pool.
   files:
   - src/backend/openapi.rs
   extra:
@@ -222,9 +212,6 @@ items:
   status: done
   title: Inject ParamLocation::Header params into outgoing OpenAPI requests
   completed: 2026-04-05
-  description: |
-    ParamLocation::Header params are parsed from the spec but never injected into
-    outgoing requests.
   files:
   - src/backend/openapi.rs
   extra:
@@ -238,9 +225,6 @@ items:
   status: done
   title: Forward stdio MCP child stderr instead of discarding via Stdio::null()
   completed: 2026-04-05
-  description: |
-    Child stderr is discarded via Stdio::null(). Stdio server diagnostics are invisible
-    on crash.
   files:
   - src/backend/mcp.rs
   extra:
@@ -252,16 +236,19 @@ items:
   priority: P1
   status: done
   title: Auto-write OpenAPI specs to ~/.ctx/mcpipe/schemas/openapi/{name}.{ts}.openapi.yaml
-  description: |
-    --gen-openapi with no --openapi-output now writes to
-    ~/.ctx/mcpipe/schemas/openapi/<cli>.<unix-ts>.openapi.yaml, creating dirs as needed.
-    Explicit --openapi-output still takes precedence. doob.openapi.yaml removed from repo.
   files:
   - src/main.rs
   - .gitignore
   extra: []
   completed: 2026-04-06
 log:
+- date: 2026-04-07
+  summary: Standardized CI — ci.yml, nightly.yml, deny.toml, Justfile, git hooks. Fixed
+    cargo fmt drift, ignored RUSTSEC-2025-0134 (rustls-pemfile, transitive). All CI jobs green.
+  commits:
+  - 0bf2167
+  - 9c5c004
+  - 38956bf
 - date: 2026-04-06
   summary: devkit council sweep — 10 issues filed (#2-#11). Critical: circular $ref infinite
     loop, StdioSession hang, OpenApiFile panic. Added mcpipe-17/18/19 to HANDOFF.
@@ -276,14 +263,6 @@ log:
   commits:
   - 47cdcc2
 - date: 2026-04-05
-  summary: Exercised --scan. Fixed basename dedup, added skip dirs (baml_client/vendor/etc), moved errors to stderr, truncated multi-line descriptions. All tests passing.
+  summary: Exercised --scan. Fixed basename dedup, added skip dirs, moved errors to stderr, truncated multi-line descriptions. All tests passing.
   commits:
   - 20d7254
-- date: 2026-04-04
-  summary: Generated doob.openapi.yaml (16 endpoints), wrote doob.baml in devloop (6 functions, haiku). Merged both PRs. All open items done — only P3 parked items remain.
-  commits:
-  - 35f6ce5
-  - efb1d8e
-  - c0b72a6
-- date: 2026-04-04
-  summary: Merged both PRs (doob#2 → mcpipe#1). Worktrees cleaned. Ready for doob.openapi.yaml generation and doob.baml BAML integration.
