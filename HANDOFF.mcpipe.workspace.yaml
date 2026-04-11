@@ -241,6 +241,21 @@ items:
   - .gitignore
   extra: []
   completed: 2026-04-06
+- id: mcpipe-21
+  name: obfsck-server-integration
+  priority: P2
+  status: open
+  title: Auto-map obfsck MCP server — audit and generate-filters tools
+  description: |
+    When obfsck gains server mode (obfsck-11), mcpipe should auto-discover it
+    via --scan and expose audit/generate-filters through the normal tool routing.
+    coursers-11 depends on both this and obfsck-11 being available.
+  files:
+  - src/discovery.rs
+  extra:
+  - date: 2026-04-11
+    type: note
+    note: "required by coursers-11 — blocked on obfsck-11 first"
 log:
 - date: 2026-04-07
   summary: Standardized CI — ci.yml, nightly.yml, deny.toml, Justfile, git hooks. Fixed
