@@ -245,6 +245,7 @@ items:
   name: obfsck-server-integration
   priority: P2
   status: open
+  unblocks: [coursers-11]
   title: Auto-map obfsck MCP server — audit and generate-filters tools
   description: |
     When obfsck gains server mode (obfsck-11), mcpipe should auto-discover it
