@@ -450,6 +450,7 @@ async fn openapi_output_dir() -> anyhow::Result<std::path::PathBuf> {
 async fn run_scan() -> anyhow::Result<()> {
     use mcpipe::discovery::SourceScanner;
     use mcpipe::scanner::claude_config::ClaudeConfigScanner;
+    use mcpipe::scanner::path_binary::PathBinaryScanner;
     use mcpipe::scanner::well_known::WellKnownScanner;
     use mcpipe::scanner::workspace::WorkspaceScanner;
 
@@ -459,6 +460,7 @@ async fn run_scan() -> anyhow::Result<()> {
         Box::new(ClaudeConfigScanner::default_env()),
         Box::new(WorkspaceScanner::default_env()),
         Box::new(WellKnownScanner::new()),
+        Box::new(PathBinaryScanner::new()),
     ];
 
     let scan_futures: Vec<_> = scanners.iter().map(|s| s.scan()).collect();
