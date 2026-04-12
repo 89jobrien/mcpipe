@@ -1,6 +1,6 @@
 project: mcpipe
 id: mcpipe
-updated: 2026-04-07
+updated: 2026-04-11
 items:
 - id: mcpipe-17
   name: circular-ref-infinite-loop
@@ -244,7 +244,8 @@ items:
 - id: mcpipe-21
   name: obfsck-server-integration
   priority: P2
-  status: open
+  status: done
+  completed: 2026-04-11
   unblocks: [coursers-11]
   title: Auto-map obfsck MCP server — audit and generate-filters tools
   description: |
@@ -252,12 +253,20 @@ items:
     via --scan and expose audit/generate-filters through the normal tool routing.
     coursers-11 depends on both this and obfsck-11 being available.
   files:
-  - src/discovery.rs
+  - src/scanner/path_binary.rs
+  - src/scanner/mod.rs
+  - src/main.rs
+  - tests/scanner_path_binary.rs
   extra:
   - date: 2026-04-11
     type: note
     note: "required by coursers-11 — blocked on obfsck-11 first"
 log:
+- date: 2026-04-11
+  summary: Implemented mcpipe-21 — PathBinaryScanner discovers obfsck-mcp on PATH via --scan.
+    Added src/scanner/path_binary.rs, wired into run_scan(), 4 tests. Unblocks coursers-11.
+  commits:
+  - 2989ec6
 - date: 2026-04-07
   summary: Standardized CI — ci.yml, nightly.yml, deny.toml, Justfile, git hooks. Fixed
     cargo fmt drift, ignored RUSTSEC-2025-0134 (rustls-pemfile, transitive). All CI jobs green.
@@ -266,8 +275,8 @@ log:
   - 9c5c004
   - 38956bf
 - date: 2026-04-06
-  summary: devkit council sweep — 10 issues filed (#2-#11). Critical: circular $ref infinite
-    loop, StdioSession hang, OpenApiFile panic. Added mcpipe-17/18/19 to HANDOFF.
+  summary: "devkit council sweep — 10 issues filed (#2-#11). Critical: circular $ref infinite\
+    \ loop, StdioSession hang, OpenApiFile panic. Added mcpipe-17/18/19 to HANDOFF."
   commits: []
 - date: 2026-04-06
   summary: Auto-write openapi output to ~/.ctx/mcpipe/schemas/openapi/{name}.{ts}.openapi.yaml
