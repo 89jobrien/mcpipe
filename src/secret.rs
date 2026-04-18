@@ -3,7 +3,7 @@ use std::path::Path;
 
 /// Resolve a secret value.
 /// - `env:VAR` → read from environment variable
-/// - `file:/path` → read file, strip trailing newline
+/// - `file:/path` → read file, strip trailing newline (LF or CRLF)
 /// - anything else → return as-is
 pub fn resolve_secret(value: &str) -> Result<String> {
     if let Some(var) = value.strip_prefix("env:") {
@@ -11,7 +11,7 @@ pub fn resolve_secret(value: &str) -> Result<String> {
     } else if let Some(path) = value.strip_prefix("file:") {
         let content = std::fs::read_to_string(Path::new(path))
             .with_context(|| format!("reading secret file {path:?}"))?;
-        Ok(content.trim_end_matches('\n').to_string())
+        Ok(content.trim_end_matches(&['\n', '\r'][..]).to_string())
     } else {
         Ok(value.to_string())
     }
@@ -46,6 +46,15 @@ mod tests {
         let dir = tempfile::tempdir().unwrap();
         let path = dir.path().join("secret.txt");
         std::fs::write(&path, "filetoken\n").unwrap();
+        let spec = format!("file:{}", path.display());
+        assert_eq!(resolve_secret(&spec).unwrap(), "filetoken");
+    }
+
+    #[test]
+    fn file_prefix_crlf() {
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("secret.txt");
+        std::fs::write(&path, "filetoken\r\n").unwrap();
         let spec = format!("file:{}", path.display());
         assert_eq!(resolve_secret(&spec).unwrap(), "filetoken");
     }
