@@ -1,0 +1,57 @@
+project: mcpipe
+id: mcpipe
+updated: 20260419:162232
+items:
+- id: mcpipe-17
+  name: circular-ref-infinite-loop
+  priority: P1
+  status: open
+  title: resolve_refs can infinite-loop on circular $ref chains in OpenAPI specs
+  description: |
+    resolve_refs in openapi.rs has no cycle detection. A spec with a circular
+    $ref causes a stack overflow. Add a seen-set or depth cap before recursing.
+  files:
+  - src/backend/openapi.rs
+  extra: []
+- id: mcpipe-18
+  name: stdio-session-hang
+  priority: P1
+  status: open
+  title: StdioSession::send_request has no timeout — hangs forever if MCP server stalls
+  description: |
+    send_request awaits indefinitely. Add a configurable timeout (default 30s)
+    with a descriptive error on expiry.
+  files:
+  - src/backend/mcp.rs
+  extra: []
+- id: mcpipe-19
+  name: openapi-file-panic
+  priority: P1
+  status: open
+  title: OpenApiFile backend panics on load failure inside into_backend()
+  description: |
+    discovery.rs calls .expect() on the OpenAPI parse result inside
+    into_backend(). Replace with proper error propagation so --scan doesn't
+    panic on a bad spec.
+  files:
+  - src/discovery.rs
+  extra: []
+log:
+- date: 20260419:162232
+  session: 8
+  summary: handup sweep — migrated to HANDOFF.mcpipe.mcpipe.yaml. Pruned all done items; retained 3 open P1 bugs (mcpipe-17/18/19).
+  commits: []
+- date: 20260411:000000
+  session: 7
+  summary: Implemented mcpipe-21 — PathBinaryScanner discovers obfsck-mcp on PATH via --scan. 4 tests. Unblocks coursers-11.
+  commits:
+  - sha: 2989ec6
+    branch: main
+- date: 20260407:000000
+  session: 6
+  summary: Standardized CI — ci.yml, nightly.yml, deny.toml, Justfile, git hooks. Fixed cargo fmt drift, ignored RUSTSEC-2025-0134. All CI green.
+  commits:
+  - sha: 0bf2167
+    branch: main
+  - sha: 9c5c004
+    branch: main
