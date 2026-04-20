@@ -291,25 +291,37 @@ fn extract_base_url(spec: &serde_json::Value) -> String {
 }
 
 pub fn resolve_refs(spec: &serde_json::Value) -> serde_json::Value {
-    resolve_node(spec, spec)
+    let mut seen = std::collections::HashSet::new();
+    resolve_node(spec, spec, &mut seen)
 }
 
-fn resolve_node(node: &serde_json::Value, root: &serde_json::Value) -> serde_json::Value {
+fn resolve_node(
+    node: &serde_json::Value,
+    root: &serde_json::Value,
+    seen: &mut std::collections::HashSet<String>,
+) -> serde_json::Value {
     match node {
         serde_json::Value::Object(map) => {
-            if let Some(ref_val) = map.get("$ref").and_then(|v| v.as_str())
-                && let Some(resolved) = resolve_ref(ref_val, root)
-            {
-                return resolve_node(&resolved, root);
+            if let Some(ref_val) = map.get("$ref").and_then(|v| v.as_str()) {
+                if seen.contains(ref_val) {
+                    // Circular reference — return node as-is to break the cycle.
+                    return node.clone();
+                }
+                if let Some(resolved) = resolve_ref(ref_val, root) {
+                    seen.insert(ref_val.to_string());
+                    let result = resolve_node(&resolved, root, seen);
+                    seen.remove(ref_val);
+                    return result;
+                }
             }
             serde_json::Value::Object(
                 map.iter()
-                    .map(|(k, v)| (k.clone(), resolve_node(v, root)))
+                    .map(|(k, v)| (k.clone(), resolve_node(v, root, seen)))
                     .collect(),
             )
         }
         serde_json::Value::Array(arr) => {
-            serde_json::Value::Array(arr.iter().map(|v| resolve_node(v, root)).collect())
+            serde_json::Value::Array(arr.iter().map(|v| resolve_node(v, root, seen)).collect())
         }
         other => other.clone(),
     }
