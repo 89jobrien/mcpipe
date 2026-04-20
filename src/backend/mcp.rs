@@ -168,6 +168,23 @@ impl StdioSession {
         method: &str,
         params: serde_json::Value,
     ) -> Result<serde_json::Value, BackendError> {
+        const TIMEOUT: std::time::Duration = std::time::Duration::from_secs(30);
+
+        tokio::time::timeout(TIMEOUT, self.send_request_inner(method, params))
+            .await
+            .map_err(|_| {
+                BackendError::Transport(format!(
+                    "MCP stdio request timed out after {}s (method: {method})",
+                    TIMEOUT.as_secs()
+                ))
+            })?
+    }
+
+    async fn send_request_inner(
+        &self,
+        method: &str,
+        params: serde_json::Value,
+    ) -> Result<serde_json::Value, BackendError> {
         let id = self.next_id().await;
         let msg = serde_json::json!({
             "jsonrpc": "2.0",
