@@ -3,6 +3,7 @@ use clap::{Arg, ArgAction, Command};
 use std::time::Duration;
 
 use mcpipe::backend::Backend;
+use mcpipe::domain::BackendError;
 use mcpipe::backend::graphql::GraphQlBackend;
 use mcpipe::backend::mcp::McpBackend;
 use mcpipe::backend::openapi::OpenApiBackend;
@@ -487,10 +488,20 @@ async fn run_scan() -> anyhow::Result<()> {
     let discover_futures: Vec<_> = all_sources
         .iter()
         .map(|src| {
-            let backend = src.clone().into_backend();
+            let backend_result = src.clone().into_backend();
             let name = src.name.clone();
             let origin = src.origin.clone();
             async move {
+                let backend = match backend_result {
+                    Ok(b) => b,
+                    Err(e) => {
+                        return (
+                            name,
+                            origin,
+                            Ok(Err(BackendError::Schema(e.to_string()))),
+                        );
+                    }
+                };
                 let result =
                     tokio::time::timeout(std::time::Duration::from_secs(10), backend.discover())
                         .await;

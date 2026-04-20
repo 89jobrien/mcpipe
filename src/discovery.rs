@@ -1,3 +1,4 @@
+use anyhow::Context as _;
 use async_trait::async_trait;
 
 /// One discovered API source — enough to construct a Backend and run discover().
@@ -26,14 +27,19 @@ pub enum BackendKind {
 }
 
 impl DiscoveredSource {
-    pub fn into_backend(self) -> Box<dyn crate::backend::Backend> {
+    pub fn into_backend(
+        self,
+    ) -> Result<Box<dyn crate::backend::Backend>, anyhow::Error> {
         use crate::backend::mcp::McpBackend;
-        match self.kind {
+        Ok(match self.kind {
             BackendKind::McpStdio { command } => Box::new(McpBackend::from_stdio(command)),
             BackendKind::McpHttp { url } => Box::new(McpBackend::from_http(url, vec![])),
             BackendKind::OpenApiFile { path } => {
                 use crate::backend::openapi::OpenApiBackend;
-                Box::new(OpenApiBackend::from_file(&path).expect("openapi load"))
+                Box::new(
+                    OpenApiBackend::from_file(&path)
+                        .with_context(|| format!("failed to load OpenAPI spec: {path}"))?,
+                )
             }
             BackendKind::GraphQL { url } => {
                 use crate::backend::graphql::GraphQlBackend;
@@ -43,7 +49,7 @@ impl DiscoveredSource {
                 use crate::backend::cli::CliBackend;
                 Box::new(CliBackend::new(command))
             }
-        }
+        })
     }
 }
 
@@ -60,7 +66,7 @@ mod tests {
             },
             origin: "manual".to_string(),
         };
-        let _backend = source.into_backend();
+        let _backend = source.into_backend().expect("cli backend should not fail");
     }
 }
 
