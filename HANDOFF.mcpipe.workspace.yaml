@@ -1,293 +1,306 @@
 project: mcpipe
 id: mcpipe
-updated: 2026-04-11
+updated: 2026-05-11
 items:
-- id: mcpipe-17
-  name: circular-ref-infinite-loop
-  priority: P1
-  status: open
-  title: resolve_refs can infinite-loop on circular $ref chains in OpenAPI specs
-  description: |
-    resolve_refs in openapi.rs has no cycle detection. A spec with a circular $ref
-    causes a stack overflow. Add a seen-set or depth cap before recursing.
-  files:
-  - src/backend/openapi.rs
-  extra: []
-- id: mcpipe-18
-  name: stdio-session-hang
-  priority: P1
-  status: open
-  title: StdioSession::send_request has no timeout — hangs forever if MCP server stalls
-  description: |
-    send_request awaits indefinitely. Add a configurable timeout (default 30s) with
-    a descriptive error on expiry.
-  files:
-  - src/backend/mcp.rs
-  extra: []
-- id: mcpipe-19
-  name: openapi-file-panic
-  priority: P1
-  status: open
-  title: OpenApiFile backend panics on load failure inside into_backend()
-  description: |
-    discovery.rs calls .expect() on the OpenAPI parse result inside into_backend().
-    Replace with proper error propagation so --scan doesn't panic on a bad spec.
-  files:
-  - src/discovery.rs
-  extra: []
-- id: mcpipe-20
-  name: ci-standardize
-  priority: P2
-  status: done
-  title: Standardize CI — ci.yml, nightly.yml, deny.toml, git hooks
-  description: |
-    Add canonical three-tier CI (compile-check → test + audit + machete), nightly geiger
-    unsafe audit, deny.toml, and git hooks via Justfile. Fixed: cargo fmt drift (25 files),
-    rustls-pemfile RUSTSEC-2025-0134 advisory ignore (transitive via eventsource-client,
-    no fix available). All CI jobs green.
-  files:
-  - .github/workflows/ci.yml
-  - .github/workflows/nightly.yml
-  - deny.toml
-  - Justfile
-  extra: []
-  completed: 2026-04-07
-- id: mcpipe-6
-  doob_uuid: a8aefce8-b10e-4960-bac3-137e6ad10f5d
-  name: auth-headers-field-rename
-  priority: P1
-  status: done
-  title: Rename McpTransport::Http `auth_headers` field to `headers`
-  files: []
-  extra: []
-  completed: 2026-04-03
-- id: mcpipe-7
-  doob_uuid: bfa8abff-beac-42db-a4a6-5473603f4593
-  name: stream-task-abort-handle
-  priority: P1
-  status: done
-  title: Add abort handle for detached SSE stream JoinHandle
-  files: []
-  extra: []
-  completed: 2026-04-03
-- id: mcpipe-1
-  doob_uuid: e75707a2-cab5-42cc-a2f6-d522b88b4bcc
-  name: openapi-relative-server-url
-  priority: P1
-  status: done
-  title: Relative `servers[0].url` in OpenAPI specs breaks HTTP requests
-  files: []
-  extra: []
-  completed: 2026-04-03
-- id: mcpipe-2
-  doob_uuid: 4d50bdaa-f30a-4e1c-ab5a-7d7d307f1205
-  name: arbitrary-request-headers
-  priority: P1
-  status: done
-  title: Add `--header KEY:VALUE` flag for arbitrary HTTP headers
-  files: []
-  extra: []
-  completed: 2026-04-03
-- id: mcpipe-3
-  doob_uuid: f6d25648-4dd2-4052-85b7-46a1574ab778
-  name: graphql-fields-override
-  priority: P2
-  status: done
-  title: Wire `--fields` override for GraphQL selection sets
-  files: []
-  extra: []
-  completed: 2026-04-03
-- id: mcpipe-4
-  doob_uuid: 86e70cf8-0efe-4984-bb12-d588269d727d
-  name: integration-test-feature-gate
-  priority: P2
-  status: done
-  title: Integration tests behind `--features integration` flag
-  files: []
-  extra: []
-  completed: 2026-04-03
-- id: mcpipe-5
-  doob_uuid: cc8755c6-8ee5-4aad-b44c-2353c52af326
-  name: list-search-output-polish
-  priority: P2
-  status: done
-  title: Polish `--list`/`--search` output with aligned columns
-  files: []
-  extra: []
-  completed: 2026-04-03
-- id: mcpipe-12
-  doob_uuid: 6ef6f2b5-645c-4a3d-b374-1777c7ce79af
-  name: abort-handle-drop-impl
-  priority: P1
-  status: done
-  title: Add `impl Drop for HttpSession` calling `self._stream_abort.abort()`
-  files:
-  - src/backend/mcp.rs
-  extra: []
-  completed: 2026-04-04
-- id: mcpipe-13
-  doob_uuid: c4aa5b7b-9245-4647-84c0-15efaf06d957
-  name: maestro-api-openapi-spec
-  priority: P2
-  status: done
-  title: Write OpenAPI spec and API.md for maestro-api
-  files:
-  - maestro-api/maestro-api.openapi.yaml
-  - maestro-api/API.md
-  extra: []
-  completed: 2026-04-04
-- id: mcpipe-14
-  doob_uuid: dabd3d1e-7ae2-4b45-bc3f-755ea36150f4
-  name: cli-backend-pr
-  priority: P1
-  status: done
-  title: Merge PR
-  files:
-  - src/backend/cli.rs
-  - src/openapi_gen.rs
-  - src/main.rs
-  extra:
-  - date: 2026-04-04
-    type: note
-    note: doob binary PATH quirk — mise shim may shadow cargo-installed doob.
-  - date: 2026-04-04
-    type: note
-    note: PR merged. doob#2 merged first (provides schema command).
-  - date: 2026-04-04
-    type: human-edit
-    field: status
-    value: done
-    reviewed: 2026-04-05
-    note: PR #1 merged via gh pr merge. doob sync keeps reverting to open.
-  completed: 2026-04-04
-- id: mcpipe-15
-  doob_uuid: 8e47e750-8d2f-471a-952f-6caf0f1a047e
-  name: baml-integration-plan
-  priority: P2
-  status: done
-  title: Write doob.baml in devloop using generated OpenAPI spec
-  files:
-  - docs/superpowers/plans/2026-04-04-cli-backend-openapi-gen.md
-  extra:
-  - date: 2026-04-04
-    type: note
-    note: Both PRs merged (doob#2 -> mcpipe#1). doob.openapi.yaml generated (406 lines, 16 endpoints). doob.baml written in devloop (6 classes, 6 functions, CustomHaiku). Sentinel review passed.
-  - date: 2026-04-04
-    type: human-edit
-    field: status
-    value: done
-    reviewed: 2026-04-05
-    note: OpenAPI spec generated and doob.baml committed. doob sync keeps reverting to open.
-  completed: 2026-04-04
-- id: mcpipe-8
-  doob_uuid: bd582b04-47c9-4b5c-b9e4-8ce38661312f
-  name: argv-strip-round-trip-test
-  priority: P3
-  status: done
-  title: Add round-trip test for global-flag argv stripping
-  completed: 2026-04-05
-  files:
-  - src/main.rs
-  extra:
-  - date: 2026-04-03
-    type: note
-    note: Superseded by conductor task xzo88d4ls8hu6h1lo3ft.
-- id: mcpipe-9
-  doob_uuid: cf4c35f5-1806-4dcb-b260-e26f47836439
-  name: reqwest-client-per-call
-  priority: P3
-  status: done
-  title: Build reqwest::Client once in OpenApiBackend, not per execute call
-  completed: 2026-04-05
-  files:
-  - src/backend/openapi.rs
-  extra:
-  - date: 2026-04-03
-    type: note
-    note: Superseded by conductor task 15poox8e4xlmpxdqu2ot.
-- id: mcpipe-10
-  doob_uuid: 6bdc3a43-becb-47be-8e7c-a25421b609d3
-  name: header-param-injection
-  priority: P3
-  status: done
-  title: Inject ParamLocation::Header params into outgoing OpenAPI requests
-  completed: 2026-04-05
-  files:
-  - src/backend/openapi.rs
-  extra:
-  - date: 2026-04-03
-    type: note
-    note: Superseded by conductor task 1ezidbsqfljp81cki67k.
-- id: mcpipe-11
-  doob_uuid: ea49882b-0887-48ce-adf3-1f05980ac2af
-  name: stdio-child-stderr-forwarding
-  priority: P3
-  status: done
-  title: Forward stdio MCP child stderr instead of discarding via Stdio::null()
-  completed: 2026-04-05
-  files:
-  - src/backend/mcp.rs
-  extra:
-  - date: 2026-04-03
-    type: note
-    note: Superseded by conductor task 2tgau6uz7crk3laphvol.
-- id: mcpipe-16
-  name: openapi-output-default-path
-  priority: P1
-  status: done
-  title: Auto-write OpenAPI specs to ~/.ctx/mcpipe/schemas/openapi/{name}.{ts}.openapi.yaml
-  files:
-  - src/main.rs
-  - .gitignore
-  extra: []
-  completed: 2026-04-06
-- id: mcpipe-21
-  name: obfsck-server-integration
-  priority: P2
-  status: done
-  completed: 2026-04-11
-  unblocks: [coursers-11]
-  title: Auto-map obfsck MCP server — audit and generate-filters tools
-  description: |
-    When obfsck gains server mode (obfsck-11), mcpipe should auto-discover it
-    via --scan and expose audit/generate-filters through the normal tool routing.
-    coursers-11 depends on both this and obfsck-11 being available.
-  files:
-  - src/scanner/path_binary.rs
-  - src/scanner/mod.rs
-  - src/main.rs
-  - tests/scanner_path_binary.rs
-  extra:
-  - date: 2026-04-11
-    type: note
-    note: "required by coursers-11 — blocked on obfsck-11 first"
+  - id: mcpipe-17
+    name: circular-ref-infinite-loop
+    priority: P1
+    status: done
+    completed: 2026-05-11
+    title: resolve_refs can infinite-loop on circular $ref chains in OpenAPI specs
+    description: |
+      resolve_refs in openapi.rs has no cycle detection. A spec with a circular $ref
+      causes a stack overflow. Add a seen-set or depth cap before recursing.
+    files:
+      - src/backend/openapi.rs
+    extra: []
+  - id: mcpipe-18
+    name: stdio-session-hang
+    priority: P1
+    status: done
+    completed: 2026-05-11
+    title: StdioSession::send_request has no timeout — hangs forever if MCP server stalls
+    description: |
+      send_request awaits indefinitely. Add a configurable timeout (default 30s) with
+      a descriptive error on expiry.
+    files:
+      - src/backend/mcp.rs
+    extra: []
+  - id: mcpipe-19
+    name: openapi-file-panic
+    priority: P1
+    status: done
+    completed: 2026-05-11
+    title: OpenApiFile backend panics on load failure inside into_backend()
+    description: |
+      discovery.rs calls .expect() on the OpenAPI parse result inside into_backend().
+      Replace with proper error propagation so --scan doesn't panic on a bad spec.
+    files:
+      - src/discovery.rs
+    extra: []
+  - id: mcpipe-20
+    name: ci-standardize
+    priority: P2
+    status: done
+    title: Standardize CI — ci.yml, nightly.yml, deny.toml, git hooks
+    description: |
+      Add canonical three-tier CI (compile-check → test + audit + machete), nightly geiger
+      unsafe audit, deny.toml, and git hooks via Justfile. Fixed: cargo fmt drift (25 files),
+      rustls-pemfile RUSTSEC-2025-0134 advisory ignore (transitive via eventsource-client,
+      no fix available). All CI jobs green.
+    files:
+      - .github/workflows/ci.yml
+      - .github/workflows/nightly.yml
+      - deny.toml
+      - Justfile
+    extra: []
+    completed: 2026-04-07
+  - id: mcpipe-6
+    doob_uuid: a8aefce8-b10e-4960-bac3-137e6ad10f5d
+    name: auth-headers-field-rename
+    priority: P1
+    status: done
+    title: Rename McpTransport::Http `auth_headers` field to `headers`
+    files: []
+    extra: []
+    completed: 2026-04-03
+  - id: mcpipe-7
+    doob_uuid: bfa8abff-beac-42db-a4a6-5473603f4593
+    name: stream-task-abort-handle
+    priority: P1
+    status: done
+    title: Add abort handle for detached SSE stream JoinHandle
+    files: []
+    extra: []
+    completed: 2026-04-03
+  - id: mcpipe-1
+    doob_uuid: e75707a2-cab5-42cc-a2f6-d522b88b4bcc
+    name: openapi-relative-server-url
+    priority: P1
+    status: done
+    title: Relative `servers[0].url` in OpenAPI specs breaks HTTP requests
+    files: []
+    extra: []
+    completed: 2026-04-03
+  - id: mcpipe-2
+    doob_uuid: 4d50bdaa-f30a-4e1c-ab5a-7d7d307f1205
+    name: arbitrary-request-headers
+    priority: P1
+    status: done
+    title: Add `--header KEY:VALUE` flag for arbitrary HTTP headers
+    files: []
+    extra: []
+    completed: 2026-04-03
+  - id: mcpipe-3
+    doob_uuid: f6d25648-4dd2-4052-85b7-46a1574ab778
+    name: graphql-fields-override
+    priority: P2
+    status: done
+    title: Wire `--fields` override for GraphQL selection sets
+    files: []
+    extra: []
+    completed: 2026-04-03
+  - id: mcpipe-4
+    doob_uuid: 86e70cf8-0efe-4984-bb12-d588269d727d
+    name: integration-test-feature-gate
+    priority: P2
+    status: done
+    title: Integration tests behind `--features integration` flag
+    files: []
+    extra: []
+    completed: 2026-04-03
+  - id: mcpipe-5
+    doob_uuid: cc8755c6-8ee5-4aad-b44c-2353c52af326
+    name: list-search-output-polish
+    priority: P2
+    status: done
+    title: Polish `--list`/`--search` output with aligned columns
+    files: []
+    extra: []
+    completed: 2026-04-03
+  - id: mcpipe-12
+    doob_uuid: 6ef6f2b5-645c-4a3d-b374-1777c7ce79af
+    name: abort-handle-drop-impl
+    priority: P1
+    status: done
+    title: Add `impl Drop for HttpSession` calling `self._stream_abort.abort()`
+    files:
+      - src/backend/mcp.rs
+    extra: []
+    completed: 2026-04-04
+  - id: mcpipe-13
+    doob_uuid: c4aa5b7b-9245-4647-84c0-15efaf06d957
+    name: maestro-api-openapi-spec
+    priority: P2
+    status: done
+    title: Write OpenAPI spec and API.md for maestro-api
+    files:
+      - maestro-api/maestro-api.openapi.yaml
+      - maestro-api/API.md
+    extra: []
+    completed: 2026-04-04
+  - id: mcpipe-14
+    doob_uuid: dabd3d1e-7ae2-4b45-bc3f-755ea36150f4
+    name: cli-backend-pr
+    priority: P1
+    status: done
+    title: Merge PR
+    files:
+      - src/backend/cli.rs
+      - src/openapi_gen.rs
+      - src/main.rs
+    extra:
+      - date: 2026-04-04
+        type: note
+        note: doob binary PATH quirk — mise shim may shadow cargo-installed doob.
+      - date: 2026-04-04
+        type: note
+        note: PR merged. doob#2 merged first (provides schema command).
+      - date: 2026-04-04
+        type: human-edit
+        field: status
+        value: done
+        reviewed: 2026-04-05
+        note: PR #1 merged via gh pr merge. doob sync keeps reverting to open.
+    completed: 2026-04-04
+  - id: mcpipe-15
+    doob_uuid: 8e47e750-8d2f-471a-952f-6caf0f1a047e
+    name: baml-integration-plan
+    priority: P2
+    status: done
+    title: Write doob.baml in devloop using generated OpenAPI spec
+    files:
+      - docs/superpowers/plans/2026-04-04-cli-backend-openapi-gen.md
+    extra:
+      - date: 2026-04-04
+        type: note
+        note: Both PRs merged (doob#2 -> mcpipe#1). doob.openapi.yaml generated (406 lines, 16 endpoints). doob.baml written in devloop (6 classes, 6 functions, CustomHaiku). Sentinel review passed.
+      - date: 2026-04-04
+        type: human-edit
+        field: status
+        value: done
+        reviewed: 2026-04-05
+        note: OpenAPI spec generated and doob.baml committed. doob sync keeps reverting to open.
+    completed: 2026-04-04
+  - id: mcpipe-8
+    doob_uuid: bd582b04-47c9-4b5c-b9e4-8ce38661312f
+    name: argv-strip-round-trip-test
+    priority: P3
+    status: done
+    title: Add round-trip test for global-flag argv stripping
+    completed: 2026-04-05
+    files:
+      - src/main.rs
+    extra:
+      - date: 2026-04-03
+        type: note
+        note: Superseded by conductor task xzo88d4ls8hu6h1lo3ft.
+  - id: mcpipe-9
+    doob_uuid: cf4c35f5-1806-4dcb-b260-e26f47836439
+    name: reqwest-client-per-call
+    priority: P3
+    status: done
+    title: Build reqwest::Client once in OpenApiBackend, not per execute call
+    completed: 2026-04-05
+    files:
+      - src/backend/openapi.rs
+    extra:
+      - date: 2026-04-03
+        type: note
+        note: Superseded by conductor task 15poox8e4xlmpxdqu2ot.
+  - id: mcpipe-10
+    doob_uuid: 6bdc3a43-becb-47be-8e7c-a25421b609d3
+    name: header-param-injection
+    priority: P3
+    status: done
+    title: Inject ParamLocation::Header params into outgoing OpenAPI requests
+    completed: 2026-04-05
+    files:
+      - src/backend/openapi.rs
+    extra:
+      - date: 2026-04-03
+        type: note
+        note: Superseded by conductor task 1ezidbsqfljp81cki67k.
+  - id: mcpipe-11
+    doob_uuid: ea49882b-0887-48ce-adf3-1f05980ac2af
+    name: stdio-child-stderr-forwarding
+    priority: P3
+    status: done
+    title: Forward stdio MCP child stderr instead of discarding via Stdio::null()
+    completed: 2026-04-05
+    files:
+      - src/backend/mcp.rs
+    extra:
+      - date: 2026-04-03
+        type: note
+        note: Superseded by conductor task 2tgau6uz7crk3laphvol.
+  - id: mcpipe-16
+    name: openapi-output-default-path
+    priority: P1
+    status: done
+    title: Auto-write OpenAPI specs to ~/.ctx/mcpipe/schemas/openapi/{name}.{ts}.openapi.yaml
+    files:
+      - src/main.rs
+      - .gitignore
+    extra: []
+    completed: 2026-04-06
+  - id: mcpipe-21
+    name: obfsck-server-integration
+    priority: P2
+    status: done
+    completed: 2026-04-11
+    unblocks: [coursers-11]
+    title: Auto-map obfsck MCP server — audit and generate-filters tools
+    description: |
+      When obfsck gains server mode (obfsck-11), mcpipe should auto-discover it
+      via --scan and expose audit/generate-filters through the normal tool routing.
+      coursers-11 depends on both this and obfsck-11 being available.
+    files:
+      - src/scanner/path_binary.rs
+      - src/scanner/mod.rs
+      - src/main.rs
+      - tests/scanner_path_binary.rs
+    extra:
+      - date: 2026-04-11
+        type: note
+        note: "required by coursers-11 — blocked on obfsck-11 first"
 log:
-- date: 2026-04-11
-  summary: Implemented mcpipe-21 — PathBinaryScanner discovers obfsck-mcp on PATH via --scan.
-    Added src/scanner/path_binary.rs, wired into run_scan(), 4 tests. Unblocks coursers-11.
-  commits:
-  - 2989ec6
-- date: 2026-04-07
-  summary: Standardized CI — ci.yml, nightly.yml, deny.toml, Justfile, git hooks. Fixed
-    cargo fmt drift, ignored RUSTSEC-2025-0134 (rustls-pemfile, transitive). All CI jobs green.
-  commits:
-  - 0bf2167
-  - 9c5c004
-  - 38956bf
-- date: 2026-04-06
-  summary: "devkit council sweep — 10 issues filed (#2-#11). Critical: circular $ref infinite\
-    \ loop, StdioSession hang, OpenApiFile panic. Added mcpipe-17/18/19 to HANDOFF."
-  commits: []
-- date: 2026-04-06
-  summary: Auto-write openapi output to ~/.ctx/mcpipe/schemas/openapi/{name}.{ts}.openapi.yaml
-    when --openapi-output omitted. Removed stale doob.openapi.yaml from repo.
-  commits:
-  - aeb158b
-- date: 2026-04-05
-  summary: Resolved all 4 P3 parked items. reqwest::Client reuse in OpenApiBackend, header param injection, stdio child stderr forwarding, argv-strip round-trip test. 37 tests passing.
-  commits:
-  - 47cdcc2
-- date: 2026-04-05
-  summary: Exercised --scan. Fixed basename dedup, added skip dirs, moved errors to stderr, truncated multi-line descriptions. All tests passing.
-  commits:
-  - 20d7254
+  - date: 2026-05-11
+    summary: Fixed all 3 open P1s — mcpipe-17 (cycle detection in resolve_refs), mcpipe-18 (30s timeout on StdioSession), mcpipe-19 (error propagation in into_backend). cargo check clean.
+    commits:
+      - 7086ee6
+      - df16507
+      - 084e886
+  - date: 2026-04-11
+    summary:
+      Implemented mcpipe-21 — PathBinaryScanner discovers obfsck-mcp on PATH via --scan.
+      Added src/scanner/path_binary.rs, wired into run_scan(), 4 tests. Unblocks coursers-11.
+    commits:
+      - 2989ec6
+  - date: 2026-04-07
+    summary:
+      Standardized CI — ci.yml, nightly.yml, deny.toml, Justfile, git hooks. Fixed
+      cargo fmt drift, ignored RUSTSEC-2025-0134 (rustls-pemfile, transitive). All CI jobs green.
+    commits:
+      - 0bf2167
+      - 9c5c004
+      - 38956bf
+  - date: 2026-04-06
+    summary:
+      "devkit council sweep — 10 issues filed (#2-#11). Critical: circular $ref infinite\
+      \ loop, StdioSession hang, OpenApiFile panic. Added mcpipe-17/18/19 to HANDOFF."
+    commits: []
+  - date: 2026-04-06
+    summary:
+      Auto-write openapi output to ~/.ctx/mcpipe/schemas/openapi/{name}.{ts}.openapi.yaml
+      when --openapi-output omitted. Removed stale doob.openapi.yaml from repo.
+    commits:
+      - aeb158b
+  - date: 2026-04-05
+    summary: Resolved all 4 P3 parked items. reqwest::Client reuse in OpenApiBackend, header param injection, stdio child stderr forwarding, argv-strip round-trip test. 37 tests passing.
+    commits:
+      - 47cdcc2
+  - date: 2026-04-05
+    summary: Exercised --scan. Fixed basename dedup, added skip dirs, moved errors to stderr, truncated multi-line descriptions. All tests passing.
+    commits:
+      - 20d7254
