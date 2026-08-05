@@ -21,8 +21,19 @@ async fn main() {
 }
 
 async fn run() -> Result<()> {
+    if std::env::args().any(|a| a == "--completions") {
+        let mut app = build_global_parser();
+        clap_complete::generate(
+            clap_complete_nushell::Nushell,
+            &mut app,
+            "mcpipe",
+            &mut std::io::stdout(),
+        );
+        return Ok(());
+    }
+
     let app = build_global_parser();
-    let matches = app.get_matches();
+    let matches = app.clone().get_matches();
 
     let pretty = matches.get_flag("pretty");
     let raw = matches.get_flag("raw");
