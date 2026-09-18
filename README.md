@@ -16,17 +16,18 @@ mcpipe --mcp <url> [SUBCOMMAND] [ARGS]
 mcpipe --spec <file-or-url> [SUBCOMMAND] [ARGS]
 mcpipe --graphql <url> [SUBCOMMAND] [ARGS]
 mcpipe --cli <cmd> [SUBCOMMAND] [ARGS]
+mcpipe completions
 ```
 
 ### Backends
 
-| Flag | Source |
-|------|--------|
-| `--mcp-stdio <cmd>` | MCP server over stdio |
-| `--mcp <url>` | MCP server over HTTP/SSE |
-| `--spec <path\|url>` | OpenAPI 3.x spec (JSON or YAML) |
-| `--graphql <url>` | GraphQL endpoint (introspection) |
-| `--cli <cmd>` | Existing shell CLI (help-text parsing) |
+| Flag                 | Source                                 |
+| -------------------- | -------------------------------------- |
+| `--mcp-stdio <cmd>`  | MCP server over stdio                  |
+| `--mcp <url>`        | MCP server over HTTP/SSE               |
+| `--spec <path\|url>` | OpenAPI 3.x spec (JSON or YAML)        |
+| `--graphql <url>`    | GraphQL endpoint (introspection)       |
+| `--cli <cmd>`        | Existing shell CLI (help-text parsing) |
 
 ### Global flags
 
@@ -65,6 +66,13 @@ mcpipe --cli gh issue list
 
 # Generate an OpenAPI spec from a CLI
 mcpipe --cli mycli --gen-openapi
+```
+
+### Nushell completions
+
+```nu
+mcpipe completions | save --force mcpipe-completions.nu
+source mcpipe-completions.nu
 ```
 
 ## License

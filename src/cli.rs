@@ -162,7 +162,7 @@ mod tests {
     #[test]
     fn extract_integer_arg() {
         let cmd = make_cmd(vec![int_param("limit", false)]);
-        let app = build_command("mcpipe", &[cmd.clone()]);
+        let app = build_command("mcpipe", std::slice::from_ref(&cmd));
         let matches = app.get_matches_from(["mcpipe", "list-pets", "--limit", "10"]);
         let (_, sub_matches) = matches.subcommand().unwrap();
         let args = extract_args(sub_matches, &cmd);
@@ -172,7 +172,7 @@ mod tests {
     #[test]
     fn extract_string_arg() {
         let cmd = make_cmd(vec![str_param("name", false)]);
-        let app = build_command("mcpipe", &[cmd.clone()]);
+        let app = build_command("mcpipe", std::slice::from_ref(&cmd));
         let matches = app.get_matches_from(["mcpipe", "list-pets", "--name", "rex"]);
         let (_, sub_matches) = matches.subcommand().unwrap();
         let args = extract_args(sub_matches, &cmd);
@@ -182,7 +182,7 @@ mod tests {
     #[test]
     fn missing_optional_not_in_map() {
         let cmd = make_cmd(vec![str_param("name", false)]);
-        let app = build_command("mcpipe", &[cmd.clone()]);
+        let app = build_command("mcpipe", std::slice::from_ref(&cmd));
         let matches = app.get_matches_from(["mcpipe", "list-pets"]);
         let (_, sub_matches) = matches.subcommand().unwrap();
         let args = extract_args(sub_matches, &cmd);

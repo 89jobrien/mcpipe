@@ -27,9 +27,7 @@ pub enum BackendKind {
 }
 
 impl DiscoveredSource {
-    pub fn into_backend(
-        self,
-    ) -> Result<Box<dyn crate::backend::Backend>, anyhow::Error> {
+    pub fn into_backend(self) -> Result<Box<dyn crate::backend::Backend>, anyhow::Error> {
         use crate::backend::mcp::McpBackend;
         Ok(match self.kind {
             BackendKind::McpStdio { command } => Box::new(McpBackend::from_stdio(command)),
@@ -53,6 +51,12 @@ impl DiscoveredSource {
     }
 }
 
+/// Port: anything that can produce a list of DiscoveredSources.
+#[async_trait]
+pub trait SourceScanner: Send + Sync {
+    async fn scan(&self) -> Vec<DiscoveredSource>;
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -68,10 +72,4 @@ mod tests {
         };
         let _backend = source.into_backend().expect("cli backend should not fail");
     }
-}
-
-/// Port: anything that can produce a list of DiscoveredSources.
-#[async_trait]
-pub trait SourceScanner: Send + Sync {
-    async fn scan(&self) -> Vec<DiscoveredSource>;
 }

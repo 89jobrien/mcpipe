@@ -3,12 +3,12 @@ use clap::{Arg, ArgAction, Command};
 use std::time::Duration;
 
 use mcpipe::backend::Backend;
-use mcpipe::domain::BackendError;
 use mcpipe::backend::graphql::GraphQlBackend;
 use mcpipe::backend::mcp::McpBackend;
 use mcpipe::backend::openapi::OpenApiBackend;
 use mcpipe::cache::Cache;
 use mcpipe::cli::{build_command, extract_args};
+use mcpipe::domain::BackendError;
 use mcpipe::format::{FormatOptions, format_value};
 use mcpipe::secret::resolve_secret;
 
@@ -21,19 +21,17 @@ async fn main() {
 }
 
 async fn run() -> Result<()> {
-    if std::env::args().any(|a| a == "--completions") {
-        let mut app = build_global_parser();
-        clap_complete::generate(
-            clap_complete_nushell::Nushell,
-            &mut app,
-            "mcpipe",
-            &mut std::io::stdout(),
-        );
+    let mut app = build_global_parser();
+    if std::env::args().skip(1).eq(["--completions"]) {
+        generate_completions(&mut app);
         return Ok(());
     }
 
-    let app = build_global_parser();
     let matches = app.clone().get_matches();
+    if matches.subcommand_name() == Some("completions") {
+        generate_completions(&mut app);
+        return Ok(());
+    }
 
     let pretty = matches.get_flag("pretty");
     let raw = matches.get_flag("raw");
@@ -320,6 +318,15 @@ async fn run() -> Result<()> {
     Ok(())
 }
 
+fn generate_completions(app: &mut Command) {
+    clap_complete::generate(
+        clap_complete_nushell::Nushell,
+        app,
+        "mcpipe",
+        &mut std::io::stdout(),
+    );
+}
+
 fn build_global_parser() -> Command {
     Command::new("mcpipe")
         .about("Turn any MCP server, OpenAPI spec, or GraphQL endpoint into a shell CLI")
@@ -449,6 +456,7 @@ fn build_global_parser() -> Command {
                 .help("Write generated OpenAPI spec to FILE instead of stdout")
                 .num_args(1),
         )
+        .subcommand(Command::new("completions").about("Generate Nushell completions"))
         .allow_external_subcommands(true)
 }
 
@@ -506,11 +514,7 @@ async fn run_scan() -> anyhow::Result<()> {
                 let backend = match backend_result {
                     Ok(b) => b,
                     Err(e) => {
-                        return (
-                            name,
-                            origin,
-                            Ok(Err(BackendError::Schema(e.to_string()))),
-                        );
+                        return (name, origin, Ok(Err(BackendError::Schema(e.to_string()))));
                     }
                 };
                 let result =
@@ -585,9 +589,60 @@ async fn run_scan() -> anyhow::Result<()> {
     Ok(())
 }
 
+async fn fetch_spec(url: &str, auth_headers: &[(String, String)]) -> Result<serde_json::Value> {
+    use mcpipe::deser::{FormatHint, parse_any};
+
+    let client = reqwest::Client::new();
+    let mut req = client.get(url);
+    for (k, v) in auth_headers {
+        req = req.header(k.as_str(), v.as_str());
+    }
+    let resp = req.send().await.context("fetching spec")?;
+    if !resp.status().is_success() {
+        bail!(
+            "HTTP {}: {}",
+            resp.status(),
+            resp.text().await.unwrap_or_default()
+        );
+    }
+
+    // Derive format hint: Content-Type header first, then URL file extension
+    let ct_hint = resp
+        .headers()
+        .get(reqwest::header::CONTENT_TYPE)
+        .and_then(|v| v.to_str().ok())
+        .map(FormatHint::from_content_type)
+        .unwrap_or(FormatHint::Unknown);
+
+    let url_hint = std::path::Path::new(url)
+        .extension()
+        .and_then(|e| e.to_str())
+        .map(FormatHint::from_extension)
+        .unwrap_or(FormatHint::Unknown);
+
+    // Content-Type wins if it's definitive, otherwise fall back to URL extension
+    let hint = if ct_hint != FormatHint::Unknown {
+        ct_hint
+    } else {
+        url_hint
+    };
+
+    let bytes = resp.bytes().await.context("reading spec body")?;
+    parse_any(&bytes, hint).context("parsing spec")
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn completions_is_registered_subcommand() {
+        assert!(
+            build_global_parser()
+                .find_subcommand("completions")
+                .is_some()
+        );
+    }
 
     /// Verify that every flag listed in `global_value_flags` and `global_bool_flags`
     /// inside `run()` matches a registered arg in `build_global_parser()`.
@@ -649,46 +704,4 @@ mod tests {
             );
         }
     }
-}
-
-async fn fetch_spec(url: &str, auth_headers: &[(String, String)]) -> Result<serde_json::Value> {
-    use mcpipe::deser::{FormatHint, parse_any};
-
-    let client = reqwest::Client::new();
-    let mut req = client.get(url);
-    for (k, v) in auth_headers {
-        req = req.header(k.as_str(), v.as_str());
-    }
-    let resp = req.send().await.context("fetching spec")?;
-    if !resp.status().is_success() {
-        bail!(
-            "HTTP {}: {}",
-            resp.status(),
-            resp.text().await.unwrap_or_default()
-        );
-    }
-
-    // Derive format hint: Content-Type header first, then URL file extension
-    let ct_hint = resp
-        .headers()
-        .get(reqwest::header::CONTENT_TYPE)
-        .and_then(|v| v.to_str().ok())
-        .map(FormatHint::from_content_type)
-        .unwrap_or(FormatHint::Unknown);
-
-    let url_hint = std::path::Path::new(url)
-        .extension()
-        .and_then(|e| e.to_str())
-        .map(FormatHint::from_extension)
-        .unwrap_or(FormatHint::Unknown);
-
-    // Content-Type wins if it's definitive, otherwise fall back to URL extension
-    let hint = if ct_hint != FormatHint::Unknown {
-        ct_hint
-    } else {
-        url_hint
-    };
-
-    let bytes = resp.bytes().await.context("reading spec body")?;
-    parse_any(&bytes, hint).context("parsing spec")
 }
