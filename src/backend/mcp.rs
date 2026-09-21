@@ -1,3 +1,5 @@
+//! Discovers and calls MCP tools over stdio or HTTP with server-sent events.
+
 use async_trait::async_trait;
 use eventsource_client::{Client as SseClient, ClientBuilder as SseClientBuilder, SSE};
 use futures::StreamExt;
@@ -25,12 +27,14 @@ enum McpTransport {
 }
 
 impl McpBackend {
+    /// Creates a backend that spawns an MCP server and communicates over stdio.
     pub fn from_stdio(command: String) -> Self {
         Self {
             inner: McpTransport::Stdio { command },
         }
     }
 
+    /// Creates a backend for an MCP HTTP/SSE endpoint with request headers.
     pub fn from_http(url: String, headers: Vec<(String, String)>) -> Self {
         Self {
             inner: McpTransport::Http { url, headers },

@@ -1,3 +1,5 @@
+//! Tests MCP source discovery and deduplication across configuration files.
+
 use mcpipe::discovery::SourceScanner;
 use mcpipe::discovery::{BackendKind, DiscoveredSource};
 use mcpipe::scanner::claude_config::ClaudeConfigScanner;

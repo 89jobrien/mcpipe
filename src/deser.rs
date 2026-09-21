@@ -1,3 +1,5 @@
+//! Parses API specifications from JSON, YAML, TOML, or JSON5.
+
 use anyhow::{Context, Result};
 
 /// Format hint derived from file extension or Content-Type header.

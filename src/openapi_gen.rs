@@ -1,3 +1,5 @@
+//! Generates OpenAPI 3.1 documents from discovered command definitions.
+
 use crate::domain::CommandDef;
 
 /// Generate an OpenAPI 3.1 document from a list of CommandDefs.

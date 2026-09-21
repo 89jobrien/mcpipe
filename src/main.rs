@@ -1,3 +1,5 @@
+//! Discovers API tools and exposes them as dynamically generated CLI subcommands.
+
 use anyhow::{Context, Result, bail};
 use clap::{Arg, ArgAction, Command};
 use std::time::Duration;
@@ -286,10 +288,22 @@ async fn run() -> Result<()> {
         tool_args.push(arg.clone());
     }
 
-    let dynamic_matches = dynamic.try_get_matches_from(&tool_args).map_err(|e| {
-        let _ = e.print();
-        anyhow::anyhow!("")
-    })?;
+    let dynamic_matches = match dynamic.try_get_matches_from(&tool_args) {
+        Ok(matches) => matches,
+        Err(error)
+            if matches!(
+                error.kind(),
+                clap::error::ErrorKind::DisplayHelp | clap::error::ErrorKind::DisplayVersion
+            ) =>
+        {
+            error.print()?;
+            return Ok(());
+        }
+        Err(error) => {
+            let _ = error.print();
+            return Err(anyhow::anyhow!(""));
+        }
+    };
 
     let (sub_name, sub_matches) = dynamic_matches
         .subcommand()
@@ -330,6 +344,7 @@ fn generate_completions(app: &mut Command) {
 fn build_global_parser() -> Command {
     Command::new("mcpipe")
         .about("Turn any MCP server, OpenAPI spec, or GraphQL endpoint into a shell CLI")
+        .version(env!("CARGO_PKG_VERSION"))
         .arg(
             Arg::new("mcp-stdio")
                 .long("mcp-stdio")
@@ -447,13 +462,13 @@ fn build_global_parser() -> Command {
             Arg::new("gen-openapi")
                 .long("gen-openapi")
                 .action(ArgAction::SetTrue)
-                .help("Generate OpenAPI 3.1 spec from discovered commands and print to stdout"),
+                .help("Generate an OpenAPI 3.1 spec from a CLI backend"),
         )
         .arg(
             Arg::new("openapi-output")
                 .long("openapi-output")
                 .value_name("FILE")
-                .help("Write generated OpenAPI spec to FILE instead of stdout")
+                .help("Write the generated OpenAPI spec to FILE")
                 .num_args(1),
         )
         .subcommand(Command::new("completions").about("Generate Nushell completions"))

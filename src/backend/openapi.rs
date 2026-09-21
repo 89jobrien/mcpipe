@@ -1,3 +1,5 @@
+//! Converts OpenAPI operations into commands and executes their HTTP requests.
+
 use anyhow::{Context, Result};
 use async_trait::async_trait;
 
@@ -12,6 +14,7 @@ pub struct OpenApiBackend {
 }
 
 impl OpenApiBackend {
+    /// Loads an OpenAPI document and derives its base URL from the first server.
     pub fn from_file(path: &str) -> Result<Self> {
         use crate::deser::{FormatHint, parse_any};
         let bytes = std::fs::read(path).with_context(|| format!("reading spec file {path}"))?;
@@ -30,6 +33,7 @@ impl OpenApiBackend {
         })
     }
 
+    /// Creates a backend from a parsed OpenAPI document and explicit connection settings.
     pub fn from_json(
         spec: serde_json::Value,
         base_url: String,
@@ -43,11 +47,13 @@ impl OpenApiBackend {
         }
     }
 
+    /// Replaces the base URL used for operation requests.
     pub fn with_base_url(mut self, base_url: String) -> Self {
         self.base_url = base_url;
         self
     }
 
+    /// Replaces the headers included with every operation request.
     pub fn with_auth_headers(mut self, headers: Vec<(String, String)>) -> Self {
         self.auth_headers = headers;
         self
@@ -290,6 +296,7 @@ fn extract_base_url(spec: &serde_json::Value) -> String {
         .to_string()
 }
 
+/// Recursively resolves local JSON references while preserving reference cycles.
 pub fn resolve_refs(spec: &serde_json::Value) -> serde_json::Value {
     let mut seen = std::collections::HashSet::new();
     resolve_node(spec, spec, &mut seen)
@@ -336,6 +343,7 @@ fn resolve_ref(ref_str: &str, root: &serde_json::Value) -> Option<serde_json::Va
     Some(cur.clone())
 }
 
+/// Converts camelCase, PascalCase, or snake_case names to kebab-case.
 pub fn to_kebab(s: &str) -> String {
     let mut out = String::new();
     for (i, c) in s.chars().enumerate() {

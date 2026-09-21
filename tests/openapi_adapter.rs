@@ -1,3 +1,5 @@
+//! Tests command and parameter discovery from an OpenAPI fixture.
+
 use mcpipe::backend::Backend;
 use mcpipe::backend::openapi::OpenApiBackend;
 use mcpipe::domain::ParamLocation;

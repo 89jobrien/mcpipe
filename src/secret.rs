@@ -1,3 +1,5 @@
+//! Resolves literal, environment-backed, and file-backed secret values.
+
 use anyhow::{Context, Result};
 use std::path::Path;
 

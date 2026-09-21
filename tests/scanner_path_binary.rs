@@ -1,3 +1,5 @@
+//! Tests discovery of registered MCP server executables on `PATH`.
+
 /// Tests for PathBinaryScanner — discovers well-known MCP stdio binaries on PATH.
 /// Covers mcpipe-21: auto-map obfsck MCP server via --scan.
 use mcpipe::discovery::{BackendKind, SourceScanner};
@@ -18,11 +20,7 @@ async fn scanner_discovers_binary_on_path() {
     let bin_path = dir.path().join("obfsck-mcp");
 
     // Write a minimal shell script that exits 0 — just needs to be executable.
-    std::fs::write(
-        &bin_path,
-        "#!/bin/sh\nexit 0\n",
-    )
-    .expect("write fake binary");
+    std::fs::write(&bin_path, "#!/bin/sh\nexit 0\n").expect("write fake binary");
 
     #[cfg(unix)]
     {

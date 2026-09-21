@@ -1,3 +1,5 @@
+//! Maps GraphQL queries and mutations to commands through schema introspection.
+
 use async_trait::async_trait;
 
 use super::Backend;
@@ -12,6 +14,7 @@ pub struct GraphQlBackend {
 }
 
 impl GraphQlBackend {
+    /// Creates a backend that fetches its schema from the GraphQL endpoint.
     pub fn new(endpoint: String, auth_headers: Vec<(String, String)>) -> Self {
         Self {
             endpoint,
@@ -21,6 +24,7 @@ impl GraphQlBackend {
         }
     }
 
+    /// Creates a backend from a previously fetched introspection response.
     pub fn from_introspection(
         endpoint: String,
         introspection: serde_json::Value,
@@ -34,6 +38,7 @@ impl GraphQlBackend {
         }
     }
 
+    /// Sets the default selection fields used when executing operations.
     pub fn with_fields_override(mut self, fields: String) -> Self {
         self.fields_override = Some(fields);
         self

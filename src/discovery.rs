@@ -1,3 +1,5 @@
+//! Describes discoverable sources and the scanner interface that finds them.
+
 use anyhow::Context as _;
 use async_trait::async_trait;
 
@@ -27,6 +29,7 @@ pub enum BackendKind {
 }
 
 impl DiscoveredSource {
+    /// Constructs the protocol adapter described by this source.
     pub fn into_backend(self) -> Result<Box<dyn crate::backend::Backend>, anyhow::Error> {
         use crate::backend::mcp::McpBackend;
         Ok(match self.kind {
@@ -54,6 +57,7 @@ impl DiscoveredSource {
 /// Port: anything that can produce a list of DiscoveredSources.
 #[async_trait]
 pub trait SourceScanner: Send + Sync {
+    /// Finds available sources without failing the overall scan.
     async fn scan(&self) -> Vec<DiscoveredSource>;
 }
 

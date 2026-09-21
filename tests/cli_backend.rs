@@ -1,3 +1,5 @@
+//! Integration tests for schema discovery and OpenAPI generation from external CLIs.
+
 #[cfg(feature = "integration")]
 mod tests {
     #[tokio::test]

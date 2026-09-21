@@ -1,3 +1,5 @@
+//! Detects supported local API servers through known health endpoints.
+
 use async_trait::async_trait;
 
 use crate::discovery::{BackendKind, DiscoveredSource, SourceScanner};
@@ -18,6 +20,7 @@ const WELL_KNOWN: &[(&str, &str, WellKnownKind)] = &[(
 pub struct WellKnownScanner;
 
 impl WellKnownScanner {
+    /// Creates a scanner for the built-in local service registry.
     pub fn new() -> Self {
         Self
     }

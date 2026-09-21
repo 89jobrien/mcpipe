@@ -1,3 +1,5 @@
+//! Tests MCP stdio discovery and execution against a local echo server.
+
 use mcpipe::backend::Backend;
 use mcpipe::backend::mcp::McpBackend;
 use mcpipe::domain::ParamLocation;

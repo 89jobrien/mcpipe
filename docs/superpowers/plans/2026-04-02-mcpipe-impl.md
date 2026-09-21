@@ -40,7 +40,6 @@
 
 - Create: `Cargo.toml`
 - Create: `src/main.rs`
-
 - [ ] **Step 1: Init cargo project**
 
 ```bash
@@ -105,7 +104,6 @@ git commit -m "chore: scaffold mcpipe cargo project"
 
 - Create: `src/domain.rs`
 - Modify: `src/main.rs` (add `mod domain;`)
-
 - [ ] **Step 1: Write failing test for `CommandDef` construction**
 
 Add to `src/domain.rs`:
@@ -224,7 +222,6 @@ git commit -m "feat: add domain types (CommandDef, ParamDef, BackendError)"
 
 - Create: `src/backend/mod.rs`
 - Modify: `src/main.rs` (add `mod backend;`)
-
 - [ ] **Step 1: Write the Backend trait**
 
 Create `src/backend/mod.rs`:
@@ -301,7 +298,6 @@ git commit -m "feat: add Backend trait (port)"
 
 - Create: `src/secret.rs`
 - Modify: `src/main.rs` (add `mod secret;`)
-
 - [ ] **Step 1: Write failing tests**
 
 Create `src/secret.rs`:
@@ -413,7 +409,6 @@ git commit -m "feat: add secret resolution (env:/file:/literal)"
 
 - Create: `src/format.rs`
 - Modify: `src/main.rs` (add `mod format;`)
-
 - [ ] **Step 1: Write failing tests**
 
 Create `src/format.rs`:
@@ -562,7 +557,6 @@ git commit -m "feat: add output formatting (pretty/raw/head/jq)"
 
 - Create: `src/cache.rs`
 - Modify: `src/main.rs` (add `mod cache;`)
-
 - [ ] **Step 1: Write failing tests**
 
 Create `src/cache.rs`:
@@ -714,7 +708,6 @@ git commit -m "feat: add TTL disk cache for discovered CommandDefs"
 
 - Create: `src/cli.rs`
 - Modify: `src/main.rs` (add `mod cli;`)
-
 - [ ] **Step 1: Write failing tests**
 
 Create `src/cli.rs`:
@@ -917,7 +910,6 @@ git commit -m "feat: dynamic clap CLI builder from CommandDef list"
 - Modify: `src/backend/openapi.rs`
 - Create: `tests/fixtures/petstore.json`
 - Create: `tests/openapi_adapter.rs`
-
 - [ ] **Step 1: Add petstore fixture**
 
 Create `tests/fixtures/petstore.json`:
@@ -1367,7 +1359,6 @@ git commit -m "feat: OpenApiBackend — spec load, \$ref resolve, CommandDef gen
 - Modify: `src/backend/graphql.rs`
 - Create: `tests/fixtures/introspection.json`
 - Create: `tests/graphql_adapter.rs`
-
 - [ ] **Step 1: Add introspection fixture**
 
 Create `tests/fixtures/introspection.json`:
@@ -1717,7 +1708,6 @@ git commit -m "feat: GraphQlBackend — introspection discovery, CommandDef gene
 - Modify: `src/backend/mcp.rs`
 - Create: `tests/fixtures/mcp_echo.py`
 - Create: `tests/mcp_adapter.rs`
-
 - [ ] **Step 1: Write MCP echo server fixture**
 
 Create `tests/fixtures/mcp_echo.py`:
@@ -2318,7 +2308,7 @@ cd /Users/joe/dev/mcpipe
 
 Expected output (order may vary):
 
-```
+```text
 list-pets                       List all pets
 create-pet                      Create a pet
 show-pet-by-id                  Info for a specific pet
@@ -2373,7 +2363,7 @@ cd /Users/joe/dev/mcpipe
 
 Expected:
 
-```
+```text
 echo                            Echo the input back
 ```
 

@@ -1,3 +1,5 @@
+//! Discovers and invokes CLIs that expose command schemas and JSON output.
+
 use async_trait::async_trait;
 use serde::Deserialize;
 
@@ -28,13 +30,12 @@ struct ManifestParam {
     ty: String,
 }
 
-// ── CliBackend ────────────────────────────────────────────────────────────────
-
 pub struct CliBackend {
     command: String,
 }
 
 impl CliBackend {
+    /// Creates a backend for a command that supports `schema --json`.
     pub fn new(command: impl Into<String>) -> Self {
         Self {
             command: command.into(),
@@ -159,8 +160,6 @@ impl Backend for CliBackend {
     }
 }
 
-// ── helpers ───────────────────────────────────────────────────────────────────
-
 fn type_str_to_schema(ty: &str) -> serde_json::Value {
     match ty {
         "integer" => serde_json::json!({"type": "integer"}),
@@ -170,10 +169,9 @@ fn type_str_to_schema(ty: &str) -> serde_json::Value {
     }
 }
 
-// ── tests ─────────────────────────────────────────────────────────────────────
-
 #[cfg(test)]
 mod tests {
+    #[cfg(feature = "integration")]
     use super::*;
 
     #[cfg(feature = "integration")]

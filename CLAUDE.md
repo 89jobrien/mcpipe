@@ -1,51 +1,92 @@
 # mcpipe
 
-## Install
+Rust 2024 CLI and library that converts MCP, OpenAPI, GraphQL, and compatible CLI schemas into
+shell-callable commands.
+
+## Build and Verify
 
 ```bash
+cargo build --release
 cargo install --path .
 mcpipe --version
+
+cargo fmt --all
+cargo clippy --workspace -- -D warnings
+cargo nextest run --workspace
 ```
 
-Binary installs to `~/.cargo/bin/mcpipe` (ensure `~/.cargo/bin` is on PATH).
+Live-service tests are feature-gated:
 
-## Build & Run
+```bash
+cargo nextest run --workspace --features integration
+```
 
-- `cargo build --release` — binary at `./target/release/mcpipe`
-- `cargo clippy && cargo test` — required before commit
-- `cargo test --features integration` — run integration tests (requires live MCP servers)
+## Environment
 
-## Environment Variables
+| Variable           | Behavior                                         |
+| ------------------ | ------------------------------------------------ |
+| `MCPIPE_CACHE_DIR` | Overrides the platform discovery-cache directory |
 
-- `MCPIPE_LOG` — set to `debug` or `trace` for verbose output (default: `info`)
-- `MCPIPE_TIMEOUT` — request timeout in seconds (default: 30)
+Request and scan timeouts are currently fixed in code. There is no logging environment variable.
 
-## Common Commands
+## CLI Surface
 
-- `./target/release/mcpipe --mcp <SSE_URL> --list` — discover tools from an MCP server
-- `./target/release/mcpipe --mcp <SSE_URL> <tool-name> --<param> <value>` — execute a tool
-- Pieces MCP SSE endpoint: `http://localhost:39300/model_context_protocol/2024-11-05/sse`
+Use `mcpipe --help` as the source of truth for global flags. The only static subcommand is
+`completions`; backend operations are discovered at runtime.
 
-## PathBinaryScanner Auto-Discovery
+```bash
+mcpipe --spec tests/fixtures/petstore.json --list
+mcpipe --spec tests/fixtures/petstore.json show-pet-by-id --help
+mcpipe completions
+```
 
-`PathBinaryScanner` in `src/discovery.rs` scans the system PATH for executables and auto-generates
-tool definitions based on their help output. Invoked via `--scan-path <prefix>` flag.
+`--fields` is a GraphQL selection-set override. It appears on generated command help for every
+backend because the command tree is backend-neutral; non-GraphQL adapters ignore it.
 
-- Discovers tools matching executable name prefix (e.g. `--scan-path rustc` finds rustc-related tools)
-- Parses `--help` output to extract parameters and descriptions
-- Generates `CommandDef` structs dynamically — tools don't need explicit registration
+`--gen-openapi` requires `--cli`. It writes to `--openapi-output` when supplied, otherwise to:
+
+```text
+$HOME/.ctx/mcpipe/schemas/openapi
+```
 
 ## Architecture
 
-- `src/backend/mcp.rs` — stdio + HTTP/SSE transports; `StdioSession` and `HttpSession`
-- `src/backend/openapi.rs`, `src/backend/graphql.rs` — other backend types
-- `src/domain.rs` — `Backend` trait (hexagonal port), `CommandDef`, `BackendError`
-- `src/main.rs` — dynamic clap CLI built from discovered `CommandDef`s at runtime
+The `Backend` port is defined in `src/backend/mod.rs`. Adapters discover `CommandDef` values and
+execute one selected command. `src/main.rs` is the composition root and owns global parsing,
+backend selection, caching, dynamic parsing, execution, and output.
 
-## Quirks & Notes
+| Module                   | Responsibility                                                   |
+| ------------------------ | ---------------------------------------------------------------- |
+| `src/backend/mod.rs`     | `Backend` trait                                                  |
+| `src/backend/mcp.rs`     | MCP stdio and HTTP/SSE adapter                                   |
+| `src/backend/openapi.rs` | OpenAPI loading, reference resolution, and HTTP execution        |
+| `src/backend/graphql.rs` | GraphQL introspection and execution                              |
+| `src/backend/cli.rs`     | `schema --json` CLI discovery and subprocess execution           |
+| `src/domain.rs`          | Command, parameter, location, argument, and backend-error types  |
+| `src/cli.rs`             | Dynamic Clap command construction and argument conversion        |
+| `src/deser.rs`           | JSON, YAML, TOML, and JSON5 parsing                              |
+| `src/discovery.rs`       | Discovered-source types and `SourceScanner` port                 |
+| `src/scanner/`           | Claude config, workspace, well-known endpoint, and PATH scanners |
+| `src/cache.rs`           | TTL cache for discovered command definitions                     |
+| `src/format.rs`          | Compact, pretty, raw, jq, and array-head output handling         |
+| `src/openapi_gen.rs`     | OpenAPI 3.1 generation from command definitions                  |
+| `src/secret.rs`          | `env:`, `file:`, and literal auth-header values                  |
+| `src/main.rs`            | Binary composition root                                          |
 
-- `--list` output includes descriptions; to extract tool names: `rg '^[a-z][a-z0-9-]+\s' | cut -d' ' -f1`
-- Pieces MCP exposes ~35 real tools (full-text search, vector search, batch snapshot, LTM)
-- Maestro API spec + docs: `maestro-api/maestro-api.openapi.yaml` and `maestro-api/API.md`
-- `HANDOFF.mcpipe.workspace.yaml` tracks open items; sync with
-  `doob handoff sync --file HANDOFF.mcpipe.workspace.yaml`
+The PATH scanner is `PathBinaryScanner` in `src/scanner/path_binary.rs`. It runs as part of
+`mcpipe --scan` and checks a fixed registry of known MCP binaries; it does not accept a prefix or
+derive schemas from arbitrary executable help output.
+
+## Public API
+
+`src/lib.rs` exports ten modules. Every public type and function is listed in `docs/API.md`.
+
+## Handoff
+
+Project handoff state is stored in:
+
+```text
+.ctx/HANDOFF.mcpipe.mcpipe.yaml
+```
+
+Read the Markdown status in `HANDOFF.md`; synchronize structured state with `hj handoff`.

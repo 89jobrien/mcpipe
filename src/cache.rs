@@ -1,3 +1,5 @@
+//! Stores discovered command definitions in a source-keyed, time-limited cache.
+
 use anyhow::{Context, Result};
 use sha2::{Digest, Sha256};
 use std::path::PathBuf;
@@ -11,10 +13,12 @@ pub struct Cache {
 }
 
 impl Cache {
+    /// Creates a cache rooted at `dir` with the given entry lifetime.
     pub fn new(dir: PathBuf, ttl: Duration) -> Self {
         Self { dir, ttl }
     }
 
+    /// Returns the configured cache directory or the platform cache directory.
     pub fn default_dir() -> PathBuf {
         std::env::var("MCPIPE_CACHE_DIR")
             .map(PathBuf::from)
@@ -34,6 +38,7 @@ impl Cache {
         self.dir.join(format!("{}.json", Self::key(source)))
     }
 
+    /// Loads unexpired command definitions for a source.
     pub fn load(&self, source: &str) -> Option<Vec<CommandDef>> {
         let path = self.path(source);
         let meta = std::fs::metadata(&path).ok()?;
@@ -46,6 +51,7 @@ impl Cache {
         serde_json::from_str(&data).ok()
     }
 
+    /// Serializes command definitions to the cache entry for a source.
     pub fn save(&self, source: &str, cmds: &[CommandDef]) -> Result<()> {
         std::fs::create_dir_all(&self.dir).context("creating cache dir")?;
         let path = self.path(source);

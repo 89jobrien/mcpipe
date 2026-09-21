@@ -1,3 +1,5 @@
+//! Finds registered MCP server executables on `PATH`.
+
 use async_trait::async_trait;
 
 use crate::discovery::{BackendKind, DiscoveredSource, SourceScanner};

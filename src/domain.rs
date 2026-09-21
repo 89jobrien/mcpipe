@@ -1,3 +1,5 @@
+//! Defines commands, parameters, argument values, and backend errors.
+
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 

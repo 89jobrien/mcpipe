@@ -1,3 +1,5 @@
+//! Tests GraphQL command discovery from an introspection response.
+
 use mcpipe::backend::Backend;
 use mcpipe::backend::graphql::GraphQlBackend;
 

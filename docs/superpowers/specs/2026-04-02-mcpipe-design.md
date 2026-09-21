@@ -1,7 +1,7 @@
 # mcpipe — Design Spec
 
 **Date:** 2026-04-02
-**Status:** Approved
+**Status:** Implemented; updated to match the current source
 
 ## Overview
 
@@ -19,9 +19,10 @@
 
 ## Architecture
 
-Hexagonal architecture with a `Backend` trait as the central port. The CLI layer is generic over backends. Dependencies point inward: adapters depend on domain types, domain has zero external dependencies.
+Hexagonal architecture with a `Backend` trait as the central port. The CLI layer is generic over
+backends. Adapters depend on domain types; domain types use Serde, serde_json, and thiserror.
 
-```
+```text
 main.rs (composition root)
   │
   ├─ parse global flags
@@ -34,7 +35,7 @@ main.rs (composition root)
 
 ## Directory Structure
 
-```
+```text
 mcpipe/
 ├── src/
 │   ├── main.rs           # composition root: flag parse, backend dispatch
@@ -43,10 +44,15 @@ mcpipe/
 │   │   ├── mod.rs        # Backend trait
 │   │   ├── mcp.rs        # MCP stdio + HTTP/SSE
 │   │   ├── openapi.rs    # OpenAPI spec loader + command gen
-│   │   └── graphql.rs    # GraphQL introspection + command gen
+│   │   ├── graphql.rs    # GraphQL introspection + command gen
+│   │   └── cli.rs        # schema-aware CLI adapter
 │   ├── cli.rs            # dynamic clap command builder from CommandDef list
 │   ├── cache.rs          # TTL disk cache (JSON, keyed by SHA-256)
+│   ├── deser.rs          # JSON/YAML/TOML/JSON5 parsing
+│   ├── discovery.rs      # discovered sources and SourceScanner port
 │   ├── format.rs         # output formatting (pretty/raw/jq/head)
+│   ├── openapi_gen.rs    # OpenAPI 3.1 generation
+│   ├── scanner/          # config, workspace, endpoint, and PATH scanners
 │   └── secret.rs         # env:/file: secret resolution
 ├── tests/
 │   ├── mcp_adapter.rs    # adapter tests: spawn echo MCP server, roundtrip
@@ -57,7 +63,7 @@ mcpipe/
 
 ## Domain Types
 
-All types in `domain.rs`. No external crate dependencies in this module.
+All command and backend error types are in `src/domain.rs`.
 
 ```rust
 pub struct CommandDef {
@@ -98,11 +104,11 @@ pub enum BackendError {
 
 ## Backend Trait (Port)
 
-Defined in `backend/mod.rs`:
+Defined in `src/backend/mod.rs`:
 
 ```rust
 #[async_trait]
-pub trait Backend {
+pub trait Backend: Send + Sync {
     async fn discover(&self) -> Result<Vec<CommandDef>, BackendError>;
     async fn execute(&self, cmd: &CommandDef, args: ArgMap) -> Result<serde_json::Value, BackendError>;
 }
@@ -112,7 +118,7 @@ pub trait Backend {
 
 ## Adapters
 
-### McpBackend (`backend/mcp.rs`)
+### McpBackend (`src/backend/mcp.rs`)
 
 Two transport modes selected at construction time:
 
@@ -123,7 +129,7 @@ MCP protocol is JSON-RPC 2.0. `discover()` sends `tools/list`, `execute()` sends
 
 Stdio MCP is never cached — the subprocess is ephemeral and fast to start.
 
-### OpenApiBackend (`backend/openapi.rs`)
+### OpenApiBackend (`src/backend/openapi.rs`)
 
 - Fetches spec from URL or file path
 - Resolves `$ref` pointers inline
@@ -131,26 +137,26 @@ Stdio MCP is never cached — the subprocess is ephemeral and fast to start.
 - Path/query/header/body params mapped to `ParamDef` with correct `ParamLocation`
 - Hand-rolled JSON traversal — no heavy openapi crate
 
-### GraphQlBackend (`backend/graphql.rs`)
+### GraphQlBackend (`src/backend/graphql.rs`)
 
 - Sends standard introspection query (`__schema`) over HTTP POST
 - Maps query and mutation fields to `CommandDef`
-- Builds a minimal selection set from the return type for execution
-- `--fields` flag overrides auto-generated selection set
+- Uses `id` as the default selection set
+- `--fields` overrides the default selection set
 
 ## CLI Generation (`cli.rs`)
 
 Walks `Vec<CommandDef>` at runtime, builds a `clap::Command` tree:
 
 - Each `CommandDef` → one subcommand
-- Each required `ParamDef` → positional or `--flag` (required)
+- Each required `ParamDef` → `--flag` (required)
 - Each optional `ParamDef` → `--flag` (optional)
 - Boolean params → `--flag` (store_true)
 - `--list` / `--search PATTERN` list/filter available subcommands without executing
 
 ## Caching (`cache.rs`)
 
-- Location: `~/.cache/mcpipe/<key>.json`, overridable via `MCPIPE_CACHE_DIR`
+- Location: the platform cache directory under `mcpipe`, overridable via `MCPIPE_CACHE_DIR`
 - Key: first 16 hex chars of SHA-256 of the source URL or command string
 - Stores serialized `Vec<CommandDef>`
 - TTL: 3600s default, overridable via `--cache-ttl`
@@ -161,7 +167,7 @@ Walks `Vec<CommandDef>` at runtime, builds a `clap::Command` tree:
 
 Applied after `execute()` returns a `serde_json::Value`:
 
-- Default: compact JSON when piped, pretty-printed when stdout is a TTY
+- Default: compact JSON
 - `--pretty`: force pretty-print
 - `--raw`: print string values without JSON encoding
 - `--head N`: truncate arrays to first N elements
@@ -181,18 +187,9 @@ All errors map to `BackendError` at the adapter boundary. `main.rs` matches on v
 
 ## Dependencies
 
-```toml
-[dependencies]
-clap = { version = "4", features = ["derive"] }
-tokio = { version = "1", features = ["full"] }
-reqwest = { version = "0.12", features = ["json", "stream"] }
-serde = { version = "1", features = ["derive"] }
-serde_json = "1"
-async-trait = "0.1"
-anyhow = "1"
-sha2 = "0.10"
-eventsource-client = "0.12"
-```
+The authoritative dependency list is in `Cargo.toml`. Core dependencies include Clap, Tokio,
+reqwest, Serde, serde_json, serde_yaml, async-trait, anyhow, thiserror, sha2, eventsource-client,
+futures, dirs, URL parsing, and JSON5/TOML parsing.
 
 ## Testing Strategy
 
@@ -208,6 +205,9 @@ eventsource-client = "0.12"
 - `McpBackend`: spawn minimal MCP echo server as child process, assert `discover()` + `execute()` roundtrip
 - `OpenApiBackend`: load petstore-style fixture JSON, assert `CommandDef` output
 - `GraphQlBackend`: fixture introspection response, assert command generation
+- `CliBackend`: feature-gated discovery and execution against an installed schema-aware CLI
+- Scanner adapters: explicit config, workspace, endpoint, and PATH fixtures
+- Binary CLI: completions, generated help, and version behavior
 
 **Integration tests** (behind `--features integration`, not run in CI by default):
 

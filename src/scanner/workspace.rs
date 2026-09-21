@@ -1,3 +1,5 @@
+//! Recursively finds OpenAPI documents in workspace repositories.
+
 use async_trait::async_trait;
 use std::path::Path;
 
@@ -33,6 +35,7 @@ pub struct WorkspaceScanner {
 }
 
 impl WorkspaceScanner {
+    /// Creates a scanner for the given workspace root directories.
     pub fn from_roots(roots: Vec<String>) -> Self {
         Self { roots }
     }

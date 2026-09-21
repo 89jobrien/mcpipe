@@ -1,8 +1,9 @@
 project: mcpipe
 id: mcpipe
-updated: 20260419:162232
+updated: 2026-05-11
 items:
 - id: mcpipe-17
+  doob_uuid: null
   name: circular-ref-infinite-loop
   priority: P1
   status: open
@@ -12,8 +13,18 @@ items:
     $ref causes a stack overflow. Add a seen-set or depth cap before recursing.
   files:
   - src/backend/openapi.rs
-  extra: []
+  completed: null
+  extra:
+  - date: null
+    type: github-issue
+    field: null
+    value: null
+    reviewed: null
+    note: null
+    number: 12
+    url: https://github.com/89jobrien/mcpipe/issues/12
 - id: mcpipe-18
+  doob_uuid: null
   name: stdio-session-hang
   priority: P1
   status: open
@@ -23,8 +34,18 @@ items:
     with a descriptive error on expiry.
   files:
   - src/backend/mcp.rs
-  extra: []
+  completed: null
+  extra:
+  - date: null
+    type: github-issue
+    field: null
+    value: null
+    reviewed: null
+    note: null
+    number: 13
+    url: https://github.com/89jobrien/mcpipe/issues/13
 - id: mcpipe-19
+  doob_uuid: null
   name: openapi-file-panic
   priority: P1
   status: open
@@ -35,23 +56,35 @@ items:
     panic on a bad spec.
   files:
   - src/discovery.rs
-  extra: []
+  completed: null
+  extra:
+  - date: null
+    type: github-issue
+    field: null
+    value: null
+    reviewed: null
+    note: null
+    number: 14
+    url: https://github.com/89jobrien/mcpipe/issues/14
 log:
+- date: 2026-05-11
+  summary: session closed
+  commits:
+  - !Object
+    sha: 1e13d9e
+    branch: main
 - date: 20260419:162232
-  session: 8
   summary: handup sweep — migrated to HANDOFF.mcpipe.mcpipe.yaml. Pruned all done items; retained 3 open P1 bugs (mcpipe-17/18/19).
   commits: []
+  session: 8
 - date: 20260411:000000
-  session: 7
   summary: Implemented mcpipe-21 — PathBinaryScanner discovers obfsck-mcp on PATH via --scan. 4 tests. Unblocks coursers-11.
-  commits:
-  - sha: 2989ec6
-    branch: main
+  commits: []
+  session: 7
 - date: 20260407:000000
-  session: 6
   summary: Standardized CI — ci.yml, nightly.yml, deny.toml, Justfile, git hooks. Fixed cargo fmt drift, ignored RUSTSEC-2025-0134. All CI green.
-  commits:
-  - sha: 0bf2167
-    branch: main
-  - sha: 9c5c004
-    branch: main
+  commits: []
+  session: 6
+- date: 2026-05-11
+  summary: session closed
+  commits: []

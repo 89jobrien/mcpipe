@@ -1,3 +1,5 @@
+//! Library support for discovering API tools and exposing them as shell commands.
+
 pub mod backend;
 pub mod cache;
 pub mod cli;

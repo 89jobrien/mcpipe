@@ -1,3 +1,5 @@
+//! Finds MCP servers declared in Claude settings and project MCP configuration.
+
 use async_trait::async_trait;
 use std::collections::HashSet;
 
@@ -10,6 +12,7 @@ pub struct ClaudeConfigScanner {
 }
 
 impl ClaudeConfigScanner {
+    /// Creates a scanner for explicit settings and MCP configuration paths.
     pub fn from_paths(settings_paths: Vec<String>, mcp_paths: Vec<String>) -> Self {
         Self {
             settings_paths,
@@ -17,6 +20,7 @@ impl ClaudeConfigScanner {
         }
     }
 
+    /// Creates a scanner for Claude settings and MCP files under the home directory.
     pub fn default_env() -> Self {
         let home = dirs::home_dir().unwrap_or_default();
         let claude_settings = home.join(".claude/settings.json");

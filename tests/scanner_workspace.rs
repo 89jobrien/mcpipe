@@ -1,3 +1,5 @@
+//! Tests recursive OpenAPI discovery and workspace directory exclusions.
+
 use mcpipe::discovery::{BackendKind, SourceScanner};
 use mcpipe::scanner::workspace::WorkspaceScanner;
 use std::fs;

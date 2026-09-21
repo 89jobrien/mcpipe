@@ -1,5 +1,8 @@
 # CLI Backend + OpenAPI Generator Implementation Plan
 
+> **Status:** Historical implementation record. The feature is implemented. Current usage and
+> output behavior are documented in `README.md`; current public APIs are in `docs/API.md`.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development
 > (recommended) or superpowers:executing-plans to implement this plan task-by-task.
 > Steps use checkbox (`- [ ]`) syntax for tracking.
@@ -23,24 +26,24 @@ trait; serde_yaml for OpenAPI output.
 
 ### doob repo (`/Users/joe/dev/doob`)
 
-| File | Action | Responsibility |
-|------|--------|---------------|
-| `src/commands/schema.rs` | Create | Builds and serializes the full CLI manifest |
-| `src/commands/mod.rs` | Modify | Expose `schema` module |
-| `src/cli.rs` | Modify | Add `Schema` variant to `Commands` enum |
-| `src/main.rs` | Modify | Handle `Commands::Schema` arm |
+| File                                 | Action | Responsibility                              |
+| ------------------------------------ | ------ | ------------------------------------------- |
+| `crates/doob/src/commands/schema.rs` | Create | Builds and serializes the full CLI manifest |
+| `crates/doob/src/commands/mod.rs`    | Modify | Expose `schema` module                      |
+| `crates/doob/src/cli.rs`             | Modify | Add `Schema` variant to `Commands` enum     |
+| `crates/doob/src/main.rs`            | Modify | Handle `Commands::Schema` arm               |
 
 ### mcpipe repo (`/Users/joe/dev/mcpipe`)
 
-| File | Action | Responsibility |
-|------|--------|---------------|
-| `src/backend/cli.rs` | Create | `CliBackend` — runs schema + dispatches subcommands |
-| `src/backend/mod.rs` | Modify | Expose `cli` module |
-| `src/discovery.rs` | Modify | Add `BackendKind::Cli { command: String }` variant |
-| `src/openapi_gen.rs` | Create | Walk `Vec<CommandDef>` → OpenAPI 3.1 document |
-| `src/lib.rs` | Modify | Expose `openapi_gen` module |
-| `src/main.rs` | Modify | Add `--cli` flag + `--gen-openapi` flag, wire `CliBackend` |
-| `tests/cli_backend.rs` | Create | Integration tests (behind `integration` feature) |
+| File                   | Action | Responsibility                                             |
+| ---------------------- | ------ | ---------------------------------------------------------- |
+| `src/backend/cli.rs`   | Create | `CliBackend` — runs schema + dispatches subcommands        |
+| `src/backend/mod.rs`   | Modify | Expose `cli` module                                        |
+| `src/discovery.rs`     | Modify | Add `BackendKind::Cli { command: String }` variant         |
+| `src/openapi_gen.rs`   | Create | Walk `Vec<CommandDef>` → OpenAPI 3.1 document              |
+| `src/lib.rs`           | Modify | Expose `openapi_gen` module                                |
+| `src/main.rs`          | Modify | Add `--cli` flag + `--gen-openapi` flag, wire `CliBackend` |
+| `tests/cli_backend.rs` | Create | Integration tests (behind `integration` feature)           |
 
 ---
 
@@ -49,11 +52,12 @@ trait; serde_yaml for OpenAPI output.
 **Repos:** doob
 
 **Files:**
-- Create: `src/commands/schema.rs`
+
+- Create: `crates/doob/src/commands/schema.rs`
 
 - [ ] **Step 1: Write the failing test**
 
-In `src/commands/schema.rs`:
+In `crates/doob/src/commands/schema.rs`:
 
 ```rust
 #[cfg(test)]
@@ -81,15 +85,16 @@ mod tests {
 
 - [ ] **Step 2: Run test to verify it fails**
 
-```
+```text
 cd /Users/joe/dev/doob && cargo test commands::schema
 ```
+
 Expected: compile error — module not found.
 
 - [ ] **Step 3: Write the manifest types and `build_manifest()`**
 
 ```rust
-// src/commands/schema.rs
+// crates/doob/src/commands/schema.rs
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -268,16 +273,17 @@ pub fn build_manifest() -> CliManifest {
 
 - [ ] **Step 4: Run test to verify it passes**
 
-```
+```text
 cd /Users/joe/dev/doob && cargo test commands::schema
 ```
+
 Expected: 2 tests pass.
 
 - [ ] **Step 5: Commit**
 
-```
+```text
 cd /Users/joe/dev/doob
-git add src/commands/schema.rs
+git add crates/doob/src/commands/schema.rs
 git commit -m "feat(schema): add schema manifest types and build_manifest()"
 ```
 
@@ -288,13 +294,13 @@ git commit -m "feat(schema): add schema manifest types and build_manifest()"
 **Repos:** doob
 
 **Files:**
-- Modify: `src/commands/mod.rs`
-- Modify: `src/cli.rs`
-- Modify: `src/main.rs`
 
+- Modify: `crates/doob/src/commands/mod.rs`
+- Modify: `crates/doob/src/cli.rs`
+- Modify: `crates/doob/src/main.rs`
 - [ ] **Step 1: Write the failing test**
 
-In `src/commands/schema.rs` tests block, add:
+In `crates/doob/src/commands/schema.rs` tests block, add:
 
 ```rust
 #[test]
@@ -310,30 +316,32 @@ fn schema_command_outputs_valid_json() {
 
 - [ ] **Step 2: Run test to verify it fails**
 
-```
+```text
 cd /Users/joe/dev/doob && cargo test schema_command_outputs_valid_json
 ```
+
 Expected: compile error — `commands::schema` not in `mod.rs`.
 
-- [ ] **Step 3: Expose module in `src/commands/mod.rs`**
+- [ ] **Step 3: Expose module in `crates/doob/src/commands/mod.rs`**
 
-Add to `src/commands/mod.rs`:
+Add to `crates/doob/src/commands/mod.rs`:
+
 ```rust
 pub mod schema;
 ```
 
-- [ ] **Step 4: Add `Schema` variant to `Commands` in `src/cli.rs`**
+- [ ] **Step 4: Add `Schema` variant to `Commands` in `crates/doob/src/cli.rs`**
 
-In the `Commands` enum in `src/cli.rs`, add:
+In the `Commands` enum in `crates/doob/src/cli.rs`, add:
 
 ```rust
 /// Print machine-readable JSON manifest of all commands and params
 Schema,
 ```
 
-- [ ] **Step 5: Handle `Commands::Schema` in `src/main.rs`**
+- [ ] **Step 5: Handle `Commands::Schema` in `crates/doob/src/main.rs`**
 
-In the `match cli.command` block in `src/main.rs`, add:
+In the `match cli.command` block in `crates/doob/src/main.rs`, add:
 
 ```rust
 Commands::Schema => {
@@ -345,21 +353,23 @@ Commands::Schema => {
 
 - [ ] **Step 6: Run tests and verify**
 
-```
+```text
 cd /Users/joe/dev/doob && cargo test && cargo clippy
 ```
+
 Expected: all tests pass, no clippy warnings.
 
 - [ ] **Step 7: Smoke test the command**
 
-```
+```text
 cd /Users/joe/dev/doob && cargo run -- schema | head -20
 ```
+
 Expected: JSON with `"name": "doob"` and a `"commands"` array.
 
 - [ ] **Step 8: Commit**
 
-```
+```text
 cd /Users/joe/dev/doob
 git add src/commands/mod.rs src/commands/schema.rs src/cli.rs src/main.rs
 git commit -m "feat: add doob schema command — emits CLI manifest as JSON"
@@ -372,6 +382,7 @@ git commit -m "feat: add doob schema command — emits CLI manifest as JSON"
 **Repos:** mcpipe
 
 **Files:**
+
 - Modify: `src/discovery.rs`
 
 - [ ] **Step 1: Write the failing test**
@@ -393,9 +404,10 @@ fn cli_backend_kind_into_backend() {
 
 - [ ] **Step 2: Run test to verify it fails**
 
-```
+```text
 cd /Users/joe/dev/mcpipe && cargo test discovery
 ```
+
 Expected: compile error — `BackendKind::Cli` does not exist.
 
 - [ ] **Step 3: Add the variant**
@@ -418,9 +430,10 @@ BackendKind::Cli { command } => {
 
 - [ ] **Step 4: Run test — expect compile error on missing CliBackend**
 
-```
+```text
 cd /Users/joe/dev/mcpipe && cargo test discovery
 ```
+
 Expected: compile error — `crate::backend::cli` not found. That's correct; we implement it next.
 
 - [ ] **Step 5: Stub `src/backend/cli.rs` to unblock compilation**
@@ -460,14 +473,15 @@ pub mod cli;
 
 - [ ] **Step 7: Run tests to verify compile + test pass**
 
-```
+```text
 cd /Users/joe/dev/mcpipe && cargo test discovery
 ```
+
 Expected: 1 test passes.
 
 - [ ] **Step 8: Commit**
 
-```
+```text
 cd /Users/joe/dev/mcpipe
 git add src/discovery.rs src/backend/cli.rs src/backend/mod.rs
 git commit -m "feat(discovery): add BackendKind::Cli variant and CliBackend stub"
@@ -480,6 +494,7 @@ git commit -m "feat(discovery): add BackendKind::Cli variant and CliBackend stub
 **Repos:** mcpipe
 
 **Files:**
+
 - Modify: `src/backend/cli.rs`
 
 - [ ] **Step 1: Write the failing test**
@@ -507,9 +522,10 @@ mod tests {
 
 - [ ] **Step 2: Run test to verify it fails**
 
-```
+```text
 cd /Users/joe/dev/mcpipe && cargo test --features integration cli_backend
 ```
+
 Expected: fails — `discover()` panics with `unimplemented!()`.
 
 - [ ] **Step 3: Add manifest deserialization types**
@@ -600,14 +616,15 @@ fn type_str_to_schema(ty: &str) -> serde_json::Value {
 
 - [ ] **Step 5: Run tests**
 
-```
+```text
 cd /Users/joe/dev/mcpipe && cargo test --features integration cli_backend
 ```
+
 Expected: `discover_doob_commands` passes.
 
 - [ ] **Step 6: Commit**
 
-```
+```text
 cd /Users/joe/dev/mcpipe
 git add src/backend/cli.rs
 git commit -m "feat(cli-backend): implement discover() via doob schema --json"
@@ -620,6 +637,7 @@ git commit -m "feat(cli-backend): implement discover() via doob schema --json"
 **Repos:** mcpipe
 
 **Files:**
+
 - Modify: `src/backend/cli.rs`
 
 - [ ] **Step 1: Write the failing test**
@@ -641,9 +659,10 @@ async fn execute_doob_todo_list() {
 
 - [ ] **Step 2: Run test to verify it fails**
 
-```
+```text
 cd /Users/joe/dev/mcpipe && cargo test --features integration execute_doob
 ```
+
 Expected: fails — `execute()` panics.
 
 - [ ] **Step 3: Implement `execute()`**
@@ -712,14 +731,15 @@ async fn execute(&self, cmd: &CommandDef, args: ArgMap) -> Result<serde_json::Va
 
 - [ ] **Step 4: Run tests**
 
-```
+```text
 cd /Users/joe/dev/mcpipe && cargo test --features integration
 ```
+
 Expected: both `discover_doob_commands` and `execute_doob_todo_list` pass.
 
 - [ ] **Step 5: Commit**
 
-```
+```text
 cd /Users/joe/dev/mcpipe
 git add src/backend/cli.rs
 git commit -m "feat(cli-backend): implement execute() — dispatches subcommand as subprocess"
@@ -732,9 +752,9 @@ git commit -m "feat(cli-backend): implement execute() — dispatches subcommand 
 **Repos:** mcpipe
 
 **Files:**
+
 - Create: `src/openapi_gen.rs`
 - Modify: `src/lib.rs`
-
 - [ ] **Step 1: Write the failing test**
 
 Create `src/openapi_gen.rs` with:
@@ -817,9 +837,10 @@ mod tests {
 
 - [ ] **Step 2: Run test to verify it fails**
 
-```
+```text
 cd /Users/joe/dev/mcpipe && cargo test openapi_gen
 ```
+
 Expected: compile error — module not found.
 
 - [ ] **Step 3: Implement the generator**
@@ -939,20 +960,22 @@ pub fn to_yaml(doc: &serde_json::Value) -> Result<String, serde_yaml::Error> {
 - [ ] **Step 4: Expose module in `src/lib.rs`**
 
 Add to `src/lib.rs`:
+
 ```rust
 pub mod openapi_gen;
 ```
 
 - [ ] **Step 5: Run tests**
 
-```
+```text
 cd /Users/joe/dev/mcpipe && cargo test openapi_gen
 ```
+
 Expected: 4 tests pass.
 
 - [ ] **Step 6: Commit**
 
-```
+```text
 cd /Users/joe/dev/mcpipe
 git add src/openapi_gen.rs src/lib.rs
 git commit -m "feat: add openapi_gen module — generates OpenAPI 3.1 spec from CommandDefs"
@@ -965,6 +988,7 @@ git commit -m "feat: add openapi_gen module — generates OpenAPI 3.1 spec from 
 **Repos:** mcpipe
 
 **Files:**
+
 - Modify: `src/main.rs`
 
 - [ ] **Step 1: Write the failing test**
@@ -1002,9 +1026,10 @@ mod tests {
 
 - [ ] **Step 2: Run test to verify it fails**
 
-```
+```text
 cd /Users/joe/dev/mcpipe && cargo test --features integration --test cli_backend
 ```
+
 Expected: `gen_openapi_from_doob` fails if `openapi_gen` not yet pub, or test file compiles and passes (both integration tasks already done). Fix any compile errors.
 
 - [ ] **Step 3: Add `--cli` and `--gen-openapi` flags to `build_global_parser()` in `main.rs`**
@@ -1023,13 +1048,13 @@ In `build_global_parser()` in `src/main.rs`, add these args alongside the existi
     Arg::new("gen-openapi")
         .long("gen-openapi")
         .action(ArgAction::SetTrue)
-        .help("Generate OpenAPI 3.1 spec from discovered commands and print to stdout"),
+        .help("Generate an OpenAPI 3.1 spec from a CLI backend"),
 )
 .arg(
     Arg::new("openapi-output")
         .long("openapi-output")
         .value_name("FILE")
-        .help("Write generated OpenAPI spec to FILE instead of stdout")
+        .help("Write the generated OpenAPI spec to FILE")
         .num_args(1),
 )
 ```
@@ -1061,36 +1086,50 @@ if gen_openapi {
     let doc = mcpipe::openapi_gen::generate(tool_name, "0.1.0", &commands);
     let yaml = mcpipe::openapi_gen::to_yaml(&doc)
         .context("serializing OpenAPI spec to YAML")?;
-    if let Some(path) = openapi_output {
-        std::fs::write(&path, &yaml)
-            .with_context(|| format!("writing OpenAPI spec to {path}"))?;
-        eprintln!("Wrote OpenAPI spec to {path}");
+    let resolved_path = if let Some(path) = openapi_output {
+        path
     } else {
-        print!("{yaml}");
-    }
+        let ts = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap_or_default()
+            .as_secs();
+        let home = std::env::var("HOME").context("HOME not set")?;
+        let dir = std::path::PathBuf::from(home).join(".ctx/mcpipe/schemas/openapi");
+        std::fs::create_dir_all(&dir)
+            .with_context(|| format!("creating {}", dir.display()))?;
+        dir.join(format!("{tool_name}.{ts}.openapi.yaml"))
+            .to_string_lossy()
+            .into_owned()
+    };
+    std::fs::write(&resolved_path, &yaml)
+        .with_context(|| format!("writing OpenAPI spec to {resolved_path}"))?;
+    eprintln!("Wrote OpenAPI spec to {resolved_path}");
     return Ok(());
 }
 ```
 
 - [ ] **Step 6: Run all tests**
 
-```
+```text
 cd /Users/joe/dev/mcpipe && cargo test && cargo test --features integration && cargo clippy
 ```
+
 Expected: all pass, no warnings.
 
 - [ ] **Step 7: Smoke test end-to-end**
 
-```
+```text
 cd /Users/joe/dev/mcpipe && cargo build --release
 ./target/release/mcpipe --cli doob --list
 ./target/release/mcpipe --cli doob --gen-openapi
 ```
-Expected: first command lists doob commands; second prints valid YAML OpenAPI spec.
+
+Expected: the first command lists doob commands; the second writes a timestamped YAML OpenAPI
+spec below `$HOME/.ctx/mcpipe/schemas/openapi` and prints its path to stderr.
 
 - [ ] **Step 8: Commit**
 
-```
+```text
 cd /Users/joe/dev/mcpipe
 git add src/main.rs tests/cli_backend.rs
 git commit -m "feat: wire --cli and --gen-openapi flags for CliBackend + OpenAPI generation"
@@ -1118,6 +1157,7 @@ That plan lives in the devloop repo, not here.
 ## Self-Review
 
 **Spec coverage:**
+
 - `doob schema` command → Tasks 1–2 ✓
 - `CliBackend` implementing `Backend` trait → Tasks 3–5 ✓
 - `BackendKind::Cli` in discovery → Task 3 ✓
@@ -1129,6 +1169,7 @@ That plan lives in the devloop repo, not here.
 **Placeholder scan:** None found.
 
 **Type consistency:**
+
 - `CliManifest` / `ManifestCommand` / `ManifestParam` defined in Task 4, used only in Task 4 ✓
 - `CommandDef` / `ParamDef` / `ParamLocation` from `domain.rs` — used consistently Tasks 4–7 ✓
 - `CliBackend::new(command)` defined Task 3, used Tasks 4, 5, 7 ✓

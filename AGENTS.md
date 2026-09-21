@@ -67,26 +67,30 @@ mcpipe --version
 - **Structs/Enums**: PascalCase (`CommandDef`, `BackendError`)
 - **Functions/Methods/Variables**: snake_case (`run_command`, `parse_args`)
 - **Constants**: SCREAMING_SNAKE_CASE
-- **Modules**: snake_case (`discovery.rs`, `backend/mcp.rs`)
+- **Modules**: snake_case (`discovery.rs`, `mcp.rs`)
 - **Files**: snake_case.rs
 
 ### Module Organization
 
-- **`src/domain.rs`** — Core types (`Backend` trait, `CommandDef`, `BackendError`)
-- **`src/backend/`** — Backend implementations (MCP, OpenAPI, GraphQL)
-- **`src/scanner/`** — PathBinaryScanner auto-discovery logic
+- **`src/domain.rs`** — Core command, parameter, and backend error types
+- **`src/backend/mod.rs`** — `Backend` trait (hexagonal port)
+- **`src/backend/`** — Backend adapters (MCP, OpenAPI, GraphQL, CLI schema)
+- **`src/scanner/`** — Config, workspace, endpoint, and PATH discovery adapters
 - **`src/cli.rs`** — Clap CLI structure
 - **`src/main.rs`** — Entry point (builds dynamic CLI at runtime)
 - **`src/discovery.rs`** — Tool discovery and scanning
 - **`src/cache.rs`** — Result caching for tool definitions
+- **`src/deser.rs`** — JSON, YAML, TOML, and JSON5 spec parsing
 - **`src/format.rs`** — Output formatting (JSON, plain text, etc.)
+- **`src/openapi_gen.rs`** — OpenAPI generation from discovered commands
+- **`src/secret.rs`** — Auth-header secret resolution
 
 ### Error Handling
 
 - Use `anyhow::Result<T>` for application errors
 - Avoid `unwrap()` and `expect()` in production code
 - Propagate errors with `?` operator
-- `BackendError` trait for backend-specific error types
+- `BackendError` enum for discovery, execution, lookup, transport, and schema failures
 
 ### Testing Patterns
 
@@ -106,19 +110,21 @@ mod tests {
 
 ### Hexagonal Design (Ports & Adapters)
 
-- **Port**: `Backend` trait in `domain.rs` (abstract contract)
+- **Port**: `Backend` trait in `src/backend/mod.rs` (abstract contract)
 - **Adapters**: `mcp.rs`, `openapi.rs`, `graphql.rs` (concrete implementations)
 - **CLI**: `cli.rs` with `clap` derive macros; dynamically generates subcommands at runtime
 
 ### Key Modules
 
-| Module           | Purpose                                                  |
-| ---------------- | -------------------------------------------------------- |
-| `domain.rs`      | `Backend` trait, `CommandDef`, core error types          |
-| `backend/mcp.rs` | MCP stdio + HTTP/SSE transports (`StdioSession`, etc.)   |
-| `main.rs`        | CLI entry point; builds dynamic clap commands at runtime |
-| `discovery.rs`   | Tool discovery from backends and PATH scanning           |
-| `scanner/`       | PathBinaryScanner auto-discovery from system executables |
+| Module               | Purpose                                                   |
+| -------------------- | --------------------------------------------------------- |
+| `src/domain.rs`      | `CommandDef`, `ParamDef`, `ParamLocation`, `BackendError` |
+| `src/backend/mod.rs` | `Backend` trait                                           |
+| `src/backend/mcp.rs` | MCP stdio + HTTP/SSE transports                           |
+| `src/backend/cli.rs` | `schema --json` CLI adapter                               |
+| `src/main.rs`        | CLI entry point; builds dynamic Clap commands at runtime  |
+| `src/discovery.rs`   | Discovered-source types and scanner port                  |
+| `src/scanner/`       | Config, workspace, endpoint, and PATH scanners            |
 
 ### Feature Flags
 
@@ -126,8 +132,9 @@ mod tests {
 
 ### Environment Variables
 
-- `MCPIPE_LOG` — Logging level (`debug`, `trace`, default: `info`)
-- `MCPIPE_TIMEOUT` — Request timeout in seconds (default: 30)
+- `MCPIPE_CACHE_DIR` — Override the platform discovery-cache directory
+
+Request and scan timeouts are fixed in code. There is no logging environment variable.
 
 ## Common Commands
 
@@ -140,8 +147,8 @@ mod tests {
 # Execute a tool
 ./target/release/mcpipe --mcp <URL> <tool-name> --<param> <value>
 
-# Scan system PATH for executables
-./target/release/mcpipe --scan-path rustc
+# Scan configured, workspace, well-known, and registered PATH sources
+./target/release/mcpipe --scan
 ```
 
 ### Pieces MCP Example
@@ -164,7 +171,7 @@ mcpipe --mcp $PIECES_URL search_by_vector --query "auth patterns"
 
 Follow [Conventional Commits](https://www.conventionalcommits.org/):
 
-```
+```text
 <type>(<scope>): <description>
 ```
 

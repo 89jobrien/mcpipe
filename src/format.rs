@@ -1,3 +1,5 @@
+//! Formats command results with truncation, raw output, pretty JSON, or `jq`.
+
 use anyhow::{Result, bail};
 use std::process::{Command, Stdio};
 

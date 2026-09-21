@@ -1,3 +1,5 @@
+//! Builds dynamic Clap commands and converts parsed values into backend arguments.
+
 use crate::domain::{ArgMap, CommandDef, ParamDef};
 use clap::{Arg, ArgMatches, Command};
 

@@ -5,3 +5,13 @@
 .remember/tmp/*
 # Generated OpenAPI snapshots at repo root (use --openapi-output for intentional files)
 /*.openapi.yaml
+
+# handoff-begin
+.ctx/*
+!.ctx/HANDOFF.*.yaml
+.ctx/HANDOFF.*.state.json
+!.ctx/handoff.*.config.toml.example
+.ctx/HANDOFF.*.*.state.json
+.ctx/HANDOFF.hj.hj.state.json
+.ctx/.initialized
+# handoff-end
